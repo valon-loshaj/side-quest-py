@@ -40,8 +40,8 @@ class LevelCalculator:
         if experience_gain < 0:
             raise ValueError("Experience cannot be negative")
         
-        required_exp = self.calculate_req_exp(level, experience_gain)
-        return self.experince >= required_exp
+        required_exp = self.calculate_req_exp(level)
+        return experience_gain >= required_exp
 
 @dataclass
 class Adventurer:
@@ -62,6 +62,17 @@ class Adventurer:
             raise ValueError("Adventurer level cannot be a negative number or 0")
         if self.experience < 0:
             raise ValueError("Adventurer cannot have negative experience")
+    
+    def __str__(self) -> str:
+        """
+        Return a user-friendly string representation of the adventurer.
+        
+        This is called when you use print(adventurer) or str(adventurer).
+        """
+        quest_count = len(self.completed_quests)
+        return f"{self.name} (Level {self.level}) - {self.experience} XP, {quest_count} quests completed"
+    
+    
         
     @property
     def level(self) -> int:
@@ -120,6 +131,7 @@ class Adventurer:
         was_new = quest_id not in self.completed_quests
         self.completed_quests.add(quest_id)
         
+        leveled_up = False
         if was_new:
             leveled_up = self.gain_experience(experience_gain)
             
@@ -143,7 +155,11 @@ class Adventurer:
             raise ValueError("Experience gain cannot be negative")
         
         self.experience += experience_gain
-        return self._check_level_up()
+        leveled_up = self._check_level_up()
+        if leveled_up:
+            self.experience = 0
+        
+        return leveled_up
     
     def get_exp_for_next_level(self, level: int) -> int:
         """
@@ -179,7 +195,7 @@ class Adventurer:
             bool: whether the adventurer leveled up
         """
         if self.level_calculator.has_leveled_up(self.level, self.experience):
-            self.level += 1
+            self._level += 1
             return True
         return False
         
