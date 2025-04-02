@@ -2,200 +2,266 @@ from dataclasses import dataclass, field
 from typing import Set, Tuple
 
 class LevelCalculator:
-    """handles the logic necessary when an adventurer levels up"""
+    """Handles the logic necessary when an adventurer levels up"""
     def calculate_req_exp(self, level: int) -> int:
         """
-        calculate the experience needed to reach the next level
+        Calculate the experience needed to reach the next level.
 
-        args:
-            level (int): the next level we are trying to calculate the req experience to reach
+        Args:
+            level (int): The next level we are trying to calculate the req experience to reach.
 
-        raises:
-            ValueError: if the level is less than 1
+        Raises:
+            ValueError: If the level is less than 1.
 
-        returns:
-            int: the amount of experience required to reach that level
+        Returns:
+            int: The amount of experience required to reach that level.
         """
-        if level < 1:
-            raise ValueError("Level must be greater than 0")
-        
-        return level * 100
+        try:
+            if level < 1:
+                raise ValueError("Level must be greater than 0")
+            return level * 100
+        except TypeError as e:
+            raise ValueError(f"Invalid level type: {str(e)}")
     
     def has_leveled_up(self, level: int, experience_gain: int) -> bool:
         """
-        checks if an adventurer has leveled up
+        Check if an adventurer has leveled up.
 
         Args:
-            level (int): the current level of the adventurer
-            experience_gain (int): the experience gained by the adventurer
+            level (int): The current level of the adventurer.
+            experience_gain (int): The experience gained by the adventurer.
 
         Raises:
-            ValueError: if the current level is less than 1 or if the experience gained is negative
+            ValueError: If the current level is less than 1 or if the experience gained is negative.
 
         Returns:
-            bool: whether the adventurer has leveled up
+            bool: Whether the adventurer has leveled up.
         """
-        if level < 1:
-            raise ValueError("Level must be greater than 0")
-        if experience_gain < 0:
-            raise ValueError("Experience cannot be negative")
-        
-        required_exp = self.calculate_req_exp(level)
-        return experience_gain >= required_exp
+        try:
+            if level < 1:
+                raise ValueError("Level must be greater than 0")
+            if experience_gain < 0:
+                raise ValueError("Experience cannot be negative")
+            
+            required_exp = self.calculate_req_exp(level)
+            return experience_gain >= required_exp
+        except TypeError as e:
+            raise ValueError(f"Invalid input type: {str(e)}")
 
 @dataclass
 class Adventurer:
     """
-    this is an adventurer, they go on quests and gain experience!
+    An adventurer who goes on quests and gains experience!
     """
     name: str
     _level: int = field(default=1)
     experience: int = 0
     completed_quests: Set[str] = field(default_factory=set)
     level_calculator: LevelCalculator = field(default_factory=LevelCalculator)
+    _has_leveled_up: bool = field(default=False)
     
     def __post_init__(self) -> None:
         """Validate the initial values when an adventurer is created."""
-        if not self.name:
-            raise ValueError("Adventurer must have a name")
-        if self.level < 1:
-            raise ValueError("Adventurer level cannot be a negative number or 0")
-        if self.experience < 0:
-            raise ValueError("Adventurer cannot have negative experience")
+        try:
+            if not self.name:
+                raise ValueError("Adventurer must have a name")
+            if self.level < 1:
+                raise ValueError("Adventurer level cannot be a negative number or 0")
+            if self.experience < 0:
+                raise ValueError("Adventurer cannot have negative experience")
+        except TypeError as e:
+            raise ValueError(f"Invalid input type during initialization: {str(e)}")
     
     def __str__(self) -> str:
         """
         Return a user-friendly string representation of the adventurer.
         
-        This is called when you use print(adventurer) or str(adventurer).
+        Returns:
+            str: A formatted string containing the adventurer's details.
         """
-        quest_count = len(self.completed_quests)
-        return f"{self.name} (Level {self.level}) - {self.experience} XP, {quest_count} quests completed"
+        try:
+            quest_count = len(self.completed_quests)
+            return f"{self.name} (Level {self.level}) - {self.experience} XP, {quest_count} quests completed"
+        except Exception as e:
+            return f"Error creating string representation: {str(e)}"
     
-    
-        
     @property
     def level(self) -> int:
         """
-        getter property for the current level of the adventurer
+        Get the current level of the adventurer.
 
         Returns:
-            int: adventurer current level
+            int: Adventurer's current level.
         """
         return self._level
     
     @property
     def exp_for_next_level(self) -> int:
         """
-        getter property for the exp required for the next level
+        Get the experience required for the next level.
 
         Returns:
-            int: exp required for next level
+            int: Experience required for next level.
         """
-        return self.level_calculator.calculate_req_exp(self.level)
+        try:
+            return self.level_calculator.calculate_req_exp(self.level)
+        except ValueError as e:
+            raise ValueError(f"Error calculating exp for next level: {str(e)}")
     
     @property
     def exp_progress_percentage(self) -> float:
         """
-        getter property for the progress towards the next level
+        Get the progress towards the next level.
         
         Returns:
-            float: percentage progress towards next level (0 - 100)
+            float: Percentage progress towards next level (0 - 100).
         """
-        required_exp = self.exp_for_next_level
-        return (self.experience / required_exp) * 100 if required_exp > 0 else 100
+        try:
+            required_exp = self.exp_for_next_level
+            return (self.experience / required_exp) * 100 if required_exp > 0 else 100
+        except ZeroDivisionError:
+            return 100
+        except Exception as e:
+            raise ValueError(f"Error calculating progress percentage: {str(e)}")
             
     def complete_quest(self, quest_id: str, experience_gain: int) -> Tuple[bool, bool]:
         """
-        when an adventurer completes a quest:
-        1) add the quest with id equal to quest_id to the completed quests
-        2) add the experience_gain to the adventurers total experience
-        
-        args:
-        - quest_id: unique id for the quest that was completed
-        - experience_gain: amount of experience earned by completing this quest
-        
-        returns:
-        a tuple of [was_new_completion, leveled_up]
-        - was_new_completion: bool that signals this quest was a newly completed quest
-        - leveled_up: whether bool that signals a level up occurred
-        
-        raises:
-        - ValueError: when the quest_id is empty or the experience_gain is negative
+        Process quest completion and experience gain.
+
+        Args:
+            quest_id: Unique id for the quest that was completed.
+            experience_gain: Amount of experience earned by completing this quest.
+
+        Returns:
+            Tuple[bool, bool]: (was_new_completion, leveled_up)
+                - was_new_completion: Whether this was a newly completed quest
+                - leveled_up: Whether a level up occurred
+
+        Raises:
+            ValueError: When the quest_id is empty or the experience_gain is negative.
         """
-        if not quest_id:
-            raise ValueError("Quest ID cannot be empty")
-        if experience_gain < 0:
-            raise ValueError("Experience gain cannot be negative")
-        
-        was_new = quest_id not in self.completed_quests
-        self.completed_quests.add(quest_id)
-        
-        leveled_up = False
-        if was_new:
-            leveled_up = self.gain_experience(experience_gain)
+        try:
+            if not quest_id:
+                raise ValueError("Quest ID cannot be empty")
+            if experience_gain < 0:
+                raise ValueError("Experience gain cannot be negative")
             
-        return (was_new, leveled_up)
+            was_new = quest_id not in self.completed_quests
+            self.completed_quests.add(quest_id)
             
-    def gain_experience(self, experience_gain) -> bool:
+            if was_new:
+                self._reset_level_up_status()
+                self.gain_experience(experience_gain)
+                leveled_up = self.has_leveled_up()
+            else:
+                leveled_up = False
+                
+            return (was_new, leveled_up)
+        
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Error completing quest '{quest_id}': {str(e)}")
+        except Exception as e:
+            raise type(e)(f"Unexpected error occurred when completing quest '{quest_id}': {str(e)}")
+            
+    def gain_experience(self, experience_gain: int) -> None:
         """
-        add the experience gained to the adventurer and determine if is resulted in a level up
+        Add experience to the adventurer.
         
-        args:
-        - experience_gain: amount of experience gained by adventurer
-        
-        returns:
-            true if a level up occured
-            false if no level up occured
+        Args:
+            experience_gain: Amount of experience gained by adventurer.
             
-        raises:
-        - ValueError if the experience gained is negative
+        Raises:
+            ValueError: If the experience gained is negative.
         """
-        if experience_gain < 0:
-            raise ValueError("Experience gain cannot be negative")
+        try:
+            if experience_gain < 0:
+                raise ValueError("Experience gain cannot be negative")
+                
+            self.experience += experience_gain
+            self._handle_level_up()
+            
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Failed to gain experience: {str(e)}")
+        except Exception as e:
+            raise type(e)(f"Unexpected error occurred when gaining experience: {str(e)}")
+    
+    def _handle_level_up(self) -> None:
+        """
+        Check for level up and handle the consequences if it occurs.
+        """
+        try:
+            if self._check_level_up():
+                self._reset_experience()
+                self._has_leveled_up = True
+        except ValueError as e:
+            raise ValueError(f"Error handling level up: {str(e)}")
+    
+    def _reset_experience(self) -> None:
+        """
+        Reset the adventurer's experience to 0 after leveling up.
+        """
+        self.experience = 0
+    
+    def _reset_level_up_status(self) -> None:
+        """
+        Reset the level up status to False.
+        This should be called before any new experience gain to track new level ups.
+        """
+        self._has_leveled_up = False
+    
+    def has_leveled_up(self) -> bool:
+        """
+        Check if the adventurer has leveled up based on current experience.
         
-        self.experience += experience_gain
-        leveled_up = self._check_level_up()
-        if leveled_up:
-            self.experience = 0
-        
-        return leveled_up
+        Returns:
+            bool: True if the adventurer has leveled up, False otherwise.
+        """
+        return self._has_leveled_up
     
     def get_exp_for_next_level(self, level: int) -> int:
         """
-        calculates the total exp required to reach the next level
+        Calculate the total exp required to reach the next level.
 
         Args:
-            level (int): the current level of the adventurer
+            level (int): The current level of the adventurer.
 
         Returns:
-            int: the amount of experience required to reach the next level
+            int: The amount of experience required to reach the next level.
         """
-        return self.level_calculator.calculate_req_exp(level)
+        try:
+            return self.level_calculator.calculate_req_exp(level)
+        except ValueError as e:
+            raise ValueError(f"Error calculating exp for next level: {str(e)}")
     
     def get_exp_progress(self) -> Tuple[int, int, float]:
         """
-        get details of current exp progress
+        Get details of current exp progress.
 
         Returns:
             Tuple[int, int, float]: 
-            - current exp
-            - exp required for next level
-            - percentage to next level
+                - current exp
+                - exp required for next level
+                - percentage to next level
         """
-        required_exp = self.get_exp_for_next_level(self.level)
-        progress = (self.experience / required_exp) * 100 if required_exp > 0 else 100
-        return (self.experience, required_exp, progress)
+        try:
+            required_exp = self.get_exp_for_next_level(self.level)
+            progress = (self.experience / required_exp) * 100 if required_exp > 0 else 100
+            return (self.experience, required_exp, progress)
+        except Exception as e:
+            raise ValueError(f"Error calculating exp progress: {str(e)}")
     
     def _check_level_up(self) -> bool:
         """
-        check if adventurer has enough experience to level up
+        Check if adventurer has enough experience to level up.
 
-        returns:
-            bool: whether the adventurer leveled up
+        Returns:
+            bool: Whether the adventurer leveled up.
         """
-        if self.level_calculator.has_leveled_up(self.level, self.experience):
-            self._level += 1
-            return True
-        return False
+        try:
+            if self.level_calculator.has_leveled_up(self.level, self.experience):
+                self._level += 1
+                return True
+            return False
+        except ValueError as e:
+            raise ValueError(f"Error checking level up: {str(e)}")
         

@@ -17,6 +17,7 @@ def test_adventurer():
     name = test_names[random_index]
     
     return Adventurer(name)
+
 class TestAdventurer:
     def test_adventurer_creation(self, test_adventurer):
         """Test the creation of an Adventurer with valid parameters"""
@@ -41,36 +42,33 @@ class TestAdventurer:
         
     def test_gain_experience(self):
         """Test that a gain of experience is added to the adventurer's total exp"""
-        
         # Arrange
         adventurer = Adventurer("Gandalf")
         initial_experience = adventurer.experience
         
         # Act
-        leveled_up = adventurer.gain_experience(50)
+        adventurer.gain_experience(50)
         
         # Assert
         assert adventurer.level == 1
         assert adventurer.experience == initial_experience + 50
-        assert leveled_up == False
+        assert not adventurer.has_leveled_up()
         
-    def test_leveled_up(self):
-        """Test that when and experience gain results in a level up, the adventurer increases in level by 1"""
-        
+    def test_level_up(self):
+        """Test that when experience gain results in a level up, the adventurer increases in level by 1"""
         # Arrange
         adventurer = Adventurer("Scarlett")
         
         # Act
-        leveled_up = adventurer.gain_experience(100)
+        adventurer.gain_experience(100)
         
         # Assert
         assert adventurer.experience == 0
         assert adventurer.level == 2
-        assert leveled_up == True
+        assert adventurer.has_leveled_up()  # Should be True after level up
         
     def test_complete_quest(self):
         """Test the completion of a quest"""
-        
         # Arrange
         adventurer = Adventurer("Frodo")
         quest_id = "quest_001"
@@ -79,7 +77,6 @@ class TestAdventurer:
         
         # Act
         was_new, leveled_up = adventurer.complete_quest(quest_id, experience_gain)
-        
         
         # Assert
         assert was_new == True
@@ -90,7 +87,6 @@ class TestAdventurer:
         
     def test_complete_quest_twice(self):
         """Test the completion of the same quest twice doesn't increase experience"""
-        
         # Arrange
         adventurer = Adventurer("Bob")
         quest_id = "quest_001"
@@ -101,7 +97,6 @@ class TestAdventurer:
         adventurer.complete_quest(quest_id, experience_gain)
         was_new, leveled_up = adventurer.complete_quest(quest_id, experience_gain)
         
-        
         # Assert
         assert was_new == False
         assert leveled_up == False
@@ -109,6 +104,28 @@ class TestAdventurer:
         assert quest_id in adventurer.completed_quests
         assert adventurer.experience == initial_exp + experience_gain
         
+    def test_has_leveled_up(self):
+        """Test the has_leveled_up method correctly reports level up status"""
+        # Arrange
+        adventurer = Adventurer("Aragorn")
+        
+        # Act & Assert
+        assert not adventurer.has_leveled_up()
+        
+        adventurer.gain_experience(100)
+        assert adventurer.has_leveled_up()
+        
+        adventurer.gain_experience(50)
+        assert adventurer.has_leveled_up()
+        
+        was_new, leveled_up = adventurer.complete_quest("quest_001", 50)
+        assert not leveled_up
+        assert not adventurer.has_leveled_up()
+        
+        was_new, leveled_up = adventurer.complete_quest("quest_002", 100)
+        assert leveled_up
+        assert adventurer.has_leveled_up()
+
 class TestLevelCalculator:
     def test_calculate_req_exp(self, level_calculator):
         """Test that the required experience is calculated correctly based on level"""
