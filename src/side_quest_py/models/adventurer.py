@@ -1,6 +1,22 @@
 from dataclasses import dataclass, field
 from typing import Set, Tuple
 
+class AdventurerValidationError(Exception):
+    """Raised when an adventurer fails validation."""
+    pass
+
+class AdventurerExperienceError(Exception):
+    """Raised when there's an error related to experience gain or calculation."""
+    pass
+
+class AdventurerLevelError(Exception):
+    """Raised when there's an error related to level calculations or leveling up."""
+    pass
+
+class AdventurerQuestError(Exception):
+    """Raised when there's an error related to quest completion."""
+    pass
+
 class LevelCalculator:
     """Handles the logic necessary when an adventurer levels up"""
     def calculate_req_exp(self, level: int) -> int:
@@ -11,17 +27,17 @@ class LevelCalculator:
             level (int): The next level we are trying to calculate the req experience to reach.
 
         Raises:
-            ValueError: If the level is less than 1.
+            AdventurerLevelError: If the level is less than 1 or invalid type.
 
         Returns:
             int: The amount of experience required to reach that level.
         """
         try:
             if level < 1:
-                raise ValueError("Level must be greater than 0")
+                raise AdventurerLevelError("Level must be greater than 0")
             return level * 100
         except TypeError as e:
-            raise ValueError(f"Invalid level type: {str(e)}")
+            raise AdventurerLevelError(f"Invalid level type: {str(e)}")
     
     def has_leveled_up(self, level: int, experience_gain: int) -> bool:
         """
@@ -32,21 +48,22 @@ class LevelCalculator:
             experience_gain (int): The experience gained by the adventurer.
 
         Raises:
-            ValueError: If the current level is less than 1 or if the experience gained is negative.
+            AdventurerLevelError: If the current level is less than 1.
+            AdventurerExperienceError: If the experience gained is negative.
 
         Returns:
             bool: Whether the adventurer has leveled up.
         """
         try:
             if level < 1:
-                raise ValueError("Level must be greater than 0")
+                raise AdventurerLevelError("Level must be greater than 0")
             if experience_gain < 0:
-                raise ValueError("Experience cannot be negative")
+                raise AdventurerExperienceError("Experience cannot be negative")
             
             required_exp = self.calculate_req_exp(level)
             return experience_gain >= required_exp
         except TypeError as e:
-            raise ValueError(f"Invalid input type: {str(e)}")
+            raise AdventurerLevelError(f"Invalid input type: {str(e)}")
 
 @dataclass
 class Adventurer:
@@ -64,13 +81,13 @@ class Adventurer:
         """Validate the initial values when an adventurer is created."""
         try:
             if not self.name:
-                raise ValueError("Adventurer must have a name")
+                raise AdventurerValidationError("Adventurer must have a name")
             if self.level < 1:
-                raise ValueError("Adventurer level cannot be a negative number or 0")
+                raise AdventurerValidationError("Adventurer level cannot be a negative number or 0")
             if self.experience < 0:
-                raise ValueError("Adventurer cannot have negative experience")
+                raise AdventurerValidationError("Adventurer cannot have negative experience")
         except TypeError as e:
-            raise ValueError(f"Invalid input type during initialization: {str(e)}")
+            raise AdventurerValidationError(f"Invalid input type during initialization: {str(e)}")
     
     def __str__(self) -> str:
         """
@@ -105,8 +122,8 @@ class Adventurer:
         """
         try:
             return self.level_calculator.calculate_req_exp(self.level)
-        except ValueError as e:
-            raise ValueError(f"Error calculating exp for next level: {str(e)}")
+        except AdventurerLevelError as e:
+            raise AdventurerLevelError(f"Error calculating exp for next level: {str(e)}")
     
     @property
     def exp_progress_percentage(self) -> float:
@@ -122,7 +139,7 @@ class Adventurer:
         except ZeroDivisionError:
             return 100
         except Exception as e:
-            raise ValueError(f"Error calculating progress percentage: {str(e)}")
+            raise AdventurerExperienceError(f"Error calculating progress percentage: {str(e)}")
             
     def complete_quest(self, quest_id: str, experience_gain: int) -> Tuple[bool, bool]:
         """
@@ -138,13 +155,13 @@ class Adventurer:
                 - leveled_up: Whether a level up occurred
 
         Raises:
-            ValueError: When the quest_id is empty or the experience_gain is negative.
+            AdventurerQuestError: When the quest_id is empty or the experience_gain is negative.
         """
         try:
             if not quest_id:
-                raise ValueError("Quest ID cannot be empty")
+                raise AdventurerQuestError("Quest ID cannot be empty")
             if experience_gain < 0:
-                raise ValueError("Experience gain cannot be negative")
+                raise AdventurerQuestError("Experience gain cannot be negative")
             
             was_new = quest_id not in self.completed_quests
             self.completed_quests.add(quest_id)
@@ -159,7 +176,7 @@ class Adventurer:
             return (was_new, leveled_up)
         
         except (TypeError, ValueError) as e:
-            raise ValueError(f"Error completing quest '{quest_id}': {str(e)}")
+            raise AdventurerQuestError(f"Error completing quest '{quest_id}': {str(e)}")
         except Exception as e:
             raise type(e)(f"Unexpected error occurred when completing quest '{quest_id}': {str(e)}")
             
@@ -171,17 +188,17 @@ class Adventurer:
             experience_gain: Amount of experience gained by adventurer.
             
         Raises:
-            ValueError: If the experience gained is negative.
+            AdventurerExperienceError: If the experience gained is negative.
         """
         try:
             if experience_gain < 0:
-                raise ValueError("Experience gain cannot be negative")
+                raise AdventurerExperienceError("Experience gain cannot be negative")
                 
             self.experience += experience_gain
             self._handle_level_up()
             
         except (TypeError, ValueError) as e:
-            raise ValueError(f"Failed to gain experience: {str(e)}")
+            raise AdventurerExperienceError(f"Failed to gain experience: {str(e)}")
         except Exception as e:
             raise type(e)(f"Unexpected error occurred when gaining experience: {str(e)}")
     
@@ -193,8 +210,8 @@ class Adventurer:
             if self._check_level_up():
                 self._reset_experience()
                 self._has_leveled_up = True
-        except ValueError as e:
-            raise ValueError(f"Error handling level up: {str(e)}")
+        except AdventurerLevelError as e:
+            raise AdventurerLevelError(f"Error handling level up: {str(e)}")
     
     def _reset_experience(self) -> None:
         """
@@ -230,8 +247,8 @@ class Adventurer:
         """
         try:
             return self.level_calculator.calculate_req_exp(level)
-        except ValueError as e:
-            raise ValueError(f"Error calculating exp for next level: {str(e)}")
+        except AdventurerLevelError as e:
+            raise AdventurerLevelError(f"Error calculating exp for next level: {str(e)}")
     
     def get_exp_progress(self) -> Tuple[int, int, float]:
         """
@@ -248,7 +265,7 @@ class Adventurer:
             progress = (self.experience / required_exp) * 100 if required_exp > 0 else 100
             return (self.experience, required_exp, progress)
         except Exception as e:
-            raise ValueError(f"Error calculating exp progress: {str(e)}")
+            raise AdventurerExperienceError(f"Error calculating exp progress: {str(e)}")
     
     def _check_level_up(self) -> bool:
         """
@@ -262,6 +279,6 @@ class Adventurer:
                 self._level += 1
                 return True
             return False
-        except ValueError as e:
-            raise ValueError(f"Error checking level up: {str(e)}")
+        except AdventurerLevelError as e:
+            raise AdventurerLevelError(f"Error checking level up: {str(e)}")
         
