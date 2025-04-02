@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from ulid import ULID
+from ulid import new as ulid_new
 from typing import Optional
 
 class QuestValidationError(Exception):
@@ -23,7 +23,7 @@ class Quest:
     """
     title: str
     experience_reward: int = field(default=50)
-    id: str = field(default_factory=lambda: ULID().str)
+    id: str = field(default_factory=lambda: str(ulid_new()))
     completed: bool = field(default=False)
     
     def __post_init__(self) -> None:

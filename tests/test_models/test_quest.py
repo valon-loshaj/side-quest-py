@@ -1,5 +1,5 @@
 import pytest
-from side_quest_py.models.quest import Quest, QuestValidationError, QuestCompletionError
+from src.side_quest_py.models.quest import Quest, QuestValidationError, QuestCompletionError
 
 def test_quest_creation():
     """Test basic quest creation with valid data."""
