@@ -27,6 +27,7 @@ coverage.xml
 .vscode/
 *.swp
 *.swo
+.cursorrules
 
 # Environment variables
 .env

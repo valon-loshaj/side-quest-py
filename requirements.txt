@@ -1,1 +1,10 @@
-ulid-py==2.3.0
+python-ulid==3.0.0
+Flask==3.0.2
+Flask-SQLAlchemy==3.0.5
+SQLAlchemy==2.0.40
+typing-extensions==4.13.0
+python-dotenv==1.0.1
+pytest==8.0.2
+black==24.2.0
+isort==5.13.2
+mypy==1.8.0

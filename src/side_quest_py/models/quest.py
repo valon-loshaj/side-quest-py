@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from ulid import new as ulid_new
+from ulid import ULID
 from typing import Optional
 
 class QuestValidationError(Exception):
@@ -8,6 +8,14 @@ class QuestValidationError(Exception):
 
 class QuestCompletionError(Exception):
     """Raised when there's an error completing a quest."""
+    pass
+
+class QuestNotFoundError(Exception):
+    """Raised when a quest is not found."""
+    pass
+
+class QuestServiceError(Exception):
+    """Raised when there's an error in the quest service."""
     pass
 
 @dataclass
@@ -23,7 +31,7 @@ class Quest:
     """
     title: str
     experience_reward: int = field(default=50)
-    id: str = field(default_factory=lambda: str(ulid_new()))
+    id: str = field(default_factory=lambda: str(ULID()))
     completed: bool = field(default=False)
     
     def __post_init__(self) -> None:
