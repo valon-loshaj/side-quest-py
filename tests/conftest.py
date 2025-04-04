@@ -1,4 +1,5 @@
 import pytest
+
 from src.side_quest_py import create_app, db
 
 

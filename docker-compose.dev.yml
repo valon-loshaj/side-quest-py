@@ -19,4 +19,4 @@ services:
     restart: unless-stopped
     # Command to keep container running for development
     stdin_open: true
-    tty: true 
+    tty: true

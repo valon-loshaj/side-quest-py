@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from ulid import ULID
 from typing import Optional
+
+from ulid import ULID
 
 
 class QuestValidationError(Exception):

@@ -1,4 +1,5 @@
 import pytest
+
 from src.side_quest_py.routes.quest_routes import quest_bp, quest_service
 
 

@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="side_quest_py",
@@ -14,4 +14,4 @@ setup(
         "python-dotenv==1.0.1",
     ],
     python_requires=">=3.8",
-) 
+)

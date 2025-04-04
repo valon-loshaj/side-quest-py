@@ -24,4 +24,4 @@ WORKDIR /app/src
 # Run gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
 
-EXPOSE 5000 
+EXPOSE 5000

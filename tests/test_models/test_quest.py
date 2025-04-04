@@ -1,8 +1,9 @@
 import pytest
+
 from src.side_quest_py.models.quest import (
     Quest,
-    QuestValidationError,
     QuestCompletionError,
+    QuestValidationError,
 )
 
 

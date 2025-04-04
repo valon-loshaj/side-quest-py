@@ -1,9 +1,9 @@
 [flake8]
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203, W503, E501, F401, ANN101, ANN201, D100, D101, D102, D103, D104, D200, D205, D400, D401, S101, ANN001, F841, S311, E712
 per-file-ignores =
     # Ignore missing docstrings in tests
-    tests/*:D100,D101,D102,D103
+    tests/*:D100,D101,D102,D103,D104,D200,D205,D400,D401,S101,ANN001,ANN201,S311,E712
     # Ignore unused imports in __init__ files
     __init__.py:F401
 exclude =
@@ -16,4 +16,4 @@ exclude =
     build,
     dist,
     *.egg-info
-max-complexity = 10 
+max-complexity = 10

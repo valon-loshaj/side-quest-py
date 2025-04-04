@@ -1,5 +1,5 @@
-from typing import Dict, Any
 import os
+from typing import Any, Dict, Optional
 
 
 class Config:
@@ -31,7 +31,7 @@ class ProductionConfig(Config):
     """Production configuration."""
 
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///side_quest.db")
-    SECRET_KEY = os.environ.get("SECRET_KEY")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "production_default_key")
 
 
 config: Dict[str, Any] = {

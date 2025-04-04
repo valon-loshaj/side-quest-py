@@ -1,4 +1,5 @@
 import os
+
 from side_quest_py import create_app
 from side_quest_py.config import config
 

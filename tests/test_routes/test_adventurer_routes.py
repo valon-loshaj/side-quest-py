@@ -1,4 +1,5 @@
 import pytest
+
 from src.side_quest_py.routes.adventurer_routes import adventurer_bp
 
 

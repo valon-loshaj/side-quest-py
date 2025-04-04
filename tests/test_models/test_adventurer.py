@@ -1,13 +1,16 @@
-import pytest
 import random
+
+import pytest
+
 from src.side_quest_py.models.adventurer import (
     Adventurer,
-    LevelCalculator,
-    AdventurerValidationError,
     AdventurerExperienceError,
     AdventurerLevelError,
     AdventurerQuestError,
+    AdventurerValidationError,
+    LevelCalculator,
 )
+
 
 @pytest.fixture
 def calculator() -> LevelCalculator:
@@ -182,7 +185,7 @@ class TestAdventurer:
         assert adventurer.has_leveled_up()
 
         adventurer._reset_level_up_status()
-        
+
         adventurer.gain_experience(50)
 
         assert not adventurer.has_leveled_up()
@@ -248,7 +251,9 @@ class TestLevelCalculator:
             calculator.has_leveled_up(-1, 100)
         assert "Level must be greater than 0" in str(exc_info.value)
 
-    def test_has_leveled_up_negative_experience(self, calculator: LevelCalculator) -> None:
+    def test_has_leveled_up_negative_experience(
+        self, calculator: LevelCalculator
+    ) -> None:
         """Test that has_leveled_up raises AdventurerExperienceError with negative experience"""
         # Arrange is handled by fixture
 

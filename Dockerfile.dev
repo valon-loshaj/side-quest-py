@@ -22,4 +22,4 @@ RUN pip install -e .
 EXPOSE 5000
 
 # Run Flask development server
-CMD ["flask", "run", "--host", "0.0.0.0", "--reload"] 
+CMD ["flask", "run", "--host", "0.0.0.0", "--reload"]

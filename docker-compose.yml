@@ -13,7 +13,7 @@ services:
     volumes:
       - ./instance:/app/instance
     restart: always
-    
+
   # Optional: Add additional services like a database, cache, etc.
   # Example for a PostgreSQL database:
   # db:
@@ -27,4 +27,4 @@ services:
   #   restart: always
 
 # volumes:
-#   postgres_data: 
+#   postgres_data:

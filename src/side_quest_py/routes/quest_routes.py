@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify, Response
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
+from flask import Blueprint, Response, jsonify, request
+
+from side_quest_py.models.quest import QuestCompletionError, QuestValidationError
 from side_quest_py.services.quest_service import QuestService
-from side_quest_py.models.quest import QuestValidationError, QuestCompletionError
 
 quest_bp = Blueprint("quest", __name__)
 quest_service = QuestService()
@@ -94,7 +96,7 @@ def complete_quest(quest_id: str) -> Tuple[Response, int]:
 def get_quests() -> Tuple[Response, int]:
     """
     Get all quests
-    
+
     Returns:
         Tuple[Response, int]: The list of quests and HTTP status code
     """
@@ -110,10 +112,10 @@ def get_quests() -> Tuple[Response, int]:
 def get_quest_by_id(quest_id: str) -> Tuple[Response, int]:
     """
     Get a quest by its ID
-    
+
     Args:
         quest_id: The ID of the quest
-        
+
     Returns:
         Tuple[Response, int]: The quest data and HTTP status code
     """

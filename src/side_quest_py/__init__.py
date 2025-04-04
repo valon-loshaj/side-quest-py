@@ -1,16 +1,17 @@
+from typing import Optional, Union
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from typing import Optional
 
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
 
 
-def create_app(config: Optional[dict] = None) -> Flask:
+def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     """Create and configure the Flask application.
 
     Args:
-        config (Optional[dict]): Configuration dictionary to override defaults
+        config (Optional[Union[dict, object]]): Configuration dictionary or object to override defaults
 
     Returns:
         Flask: Configured Flask application instance

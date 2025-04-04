@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify, Response
-from typing import Dict, Any, Tuple, Union
-from side_quest_py.services.adventurer_service import AdventurerService
+from typing import Any, Dict, Tuple, Union
+
+from flask import Blueprint, Response, jsonify, request
+
 from side_quest_py.models.adventurer import AdventurerValidationError
+from side_quest_py.services.adventurer_service import AdventurerService
 
 adventurer_bp = Blueprint("adventurer", __name__)
 adventurer_service = AdventurerService()

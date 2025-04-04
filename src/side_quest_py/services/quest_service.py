@@ -1,10 +1,11 @@
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from side_quest_py.models.quest import (
     Quest,
-    QuestValidationError,
     QuestCompletionError,
     QuestNotFoundError,
     QuestServiceError,
+    QuestValidationError,
 )
 
 
