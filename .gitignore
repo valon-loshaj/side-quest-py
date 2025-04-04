@@ -3,24 +3,34 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# C extensions
+*.so
+
 # Distribution / packaging
 dist/
 build/
 *.egg-info/
+.eggs/
+*.egg
 
 # Virtual environments
 venv/
 env/
 .env/
+ENV/
 
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
 .cache
+nosetests.xml
 coverage.xml
 *.cover
+.hypothesis/
+.pytest_cache/
 
 # IDE specific files
 .idea/
@@ -28,10 +38,54 @@ coverage.xml
 *.swp
 *.swo
 .cursorrules
+.cursor/
 
 # Environment variables
 .env
 .env.local
+.env.development
+.env.test
+.env.production
 
 # Log files
 *.log
+logs/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+instance/
+
+# Flask
+instance/
+.webassets-cache
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Documentation
+docs/_build/
+site/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+docker-data/
+
+# Temporary files
+tmp/
+temp/
