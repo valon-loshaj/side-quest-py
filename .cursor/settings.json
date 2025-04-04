@@ -2,5 +2,33 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.formatting.provider": "black",
-    "editor.formatOnSave": true
+    "python.formatting.blackPath": "black",
+    "python.formatting.blackArgs": ["--line-length", "88"],
+    "editor.formatOnSave": true,
+    "python.linting.pylintPath": "pylint",
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Path": "flake8",
+    "python.linting.flake8Args": ["--max-line-length=88", "--extend-ignore=E203"],
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyPath": "mypy",
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "isort.args": ["--profile", "black"],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.extraPaths": ["${workspaceFolder}/src"],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.completeFunctionParens": true,
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "editor.rulers": [88],
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "editor.suggestSelection": "first",
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ]
 }
