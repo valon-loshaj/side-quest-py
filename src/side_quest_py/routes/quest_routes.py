@@ -1,7 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from typing import Dict, Any, Tuple
-from src.side_quest_py.services.quest_service import QuestService
-from src.side_quest_py.models.quest import QuestValidationError, QuestCompletionError
+from side_quest_py.services.quest_service import QuestService
+from side_quest_py.models.quest import QuestValidationError, QuestCompletionError
 
 quest_bp = Blueprint("quest", __name__)
 quest_service = QuestService()
@@ -9,12 +9,12 @@ quest_service = QuestService()
 
 # Route 1: Create Quest
 @quest_bp.route("/quest", methods=["POST"])
-def create_quest() -> Tuple[Dict[str, Any], int]:
+def create_quest() -> Tuple[Response, int]:
     """
     Create a new Quest.
 
     Returns:
-        Tuple[Dict[str, Any], int]: The created quest data and the HTTP status code
+        Tuple[Response, int]: The created quest data and the HTTP status code
     """
     try:
         data = request.get_json()
@@ -47,7 +47,7 @@ def create_quest() -> Tuple[Dict[str, Any], int]:
 
 # Route 2: Complete Quest
 @quest_bp.route("/quest/<string:quest_id>", methods=["PATCH"])
-def complete_quest(quest_id: str) -> Tuple[Dict[str, Any], int]:
+def complete_quest(quest_id: str) -> Tuple[Response, int]:
     """
     Update an existing quest as completed
 
@@ -55,7 +55,7 @@ def complete_quest(quest_id: str) -> Tuple[Dict[str, Any], int]:
         quest_id: The ID of the quest to complete
 
     Returns:
-        Tuple[Dict[str, Any], int]: The quest data that was updated and HTTP status code
+        Tuple[Response, int]: The quest data that was updated and HTTP status code
     """
     try:
         existing_quest = quest_service.get_quest(quest_id)
@@ -91,9 +91,12 @@ def complete_quest(quest_id: str) -> Tuple[Dict[str, Any], int]:
 
 # Route 3: Get Quests
 @quest_bp.route("/quests", methods=["GET"])
-def get_quests() -> Tuple[Dict[str, Any], int]:
+def get_quests() -> Tuple[Response, int]:
     """
     Get all quests
+    
+    Returns:
+        Tuple[Response, int]: The list of quests and HTTP status code
     """
     try:
         quests = quest_service.get_all_quests()
@@ -104,9 +107,15 @@ def get_quests() -> Tuple[Dict[str, Any], int]:
 
 # Route 4: Get Quest by ID
 @quest_bp.route("/quest/<string:quest_id>", methods=["GET"])
-def get_quest_by_id(quest_id: str) -> Tuple[Dict[str, Any], int]:
+def get_quest_by_id(quest_id: str) -> Tuple[Response, int]:
     """
     Get a quest by its ID
+    
+    Args:
+        quest_id: The ID of the quest
+        
+    Returns:
+        Tuple[Response, int]: The quest data and HTTP status code
     """
     try:
         quest = quest_service.get_quest(quest_id)

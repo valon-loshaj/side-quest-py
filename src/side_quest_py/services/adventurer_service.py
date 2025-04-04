@@ -1,11 +1,11 @@
 from typing import Dict, Any, Optional, List
-from src.side_quest_py.models.adventurer import Adventurer, AdventurerValidationError
+from side_quest_py.models.adventurer import Adventurer, AdventurerValidationError
 
 
 class AdventurerService:
     """Service for handling adventurer-related operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the adventurer service with an in-memory store."""
         self.adventurers: Dict[str, Adventurer] = {}
 

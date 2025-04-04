@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional, List
-from src.side_quest_py.models.quest import (
+from side_quest_py.models.quest import (
     Quest,
     QuestValidationError,
     QuestCompletionError,
@@ -11,7 +11,7 @@ from src.side_quest_py.models.quest import (
 class QuestService:
     """Service for handling quest-related operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the quest service with an in-memory store."""
         self.quests: Dict[str, Quest] = {}
 

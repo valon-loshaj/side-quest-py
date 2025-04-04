@@ -1,18 +1,18 @@
-from flask import Blueprint, request, jsonify
-from typing import Dict, Any, Tuple
-from src.side_quest_py.services.adventurer_service import AdventurerService
-from src.side_quest_py.models.adventurer import AdventurerValidationError
+from flask import Blueprint, request, jsonify, Response
+from typing import Dict, Any, Tuple, Union
+from side_quest_py.services.adventurer_service import AdventurerService
+from side_quest_py.models.adventurer import AdventurerValidationError
 
 adventurer_bp = Blueprint("adventurer", __name__)
 adventurer_service = AdventurerService()
 
 
 @adventurer_bp.route("/adventurer", methods=["POST"])
-def create_adventurer() -> Tuple[Dict[str, Any], int]:
+def create_adventurer() -> Tuple[Response, int]:
     """Create a new adventurer.
 
     Returns:
-        Tuple[Dict[str, Any], int]: The created adventurer data and HTTP status code
+        Tuple[Response, int]: The created adventurer data and HTTP status code
     """
     try:
         data = request.get_json()
@@ -49,14 +49,14 @@ def create_adventurer() -> Tuple[Dict[str, Any], int]:
 
 
 @adventurer_bp.route("/adventurer/<name>", methods=["GET"])
-def get_adventurer(name: str) -> Tuple[Dict[str, Any], int]:
+def get_adventurer(name: str) -> Tuple[Response, int]:
     """Get an adventurer by name.
 
     Args:
         name: The name of the adventurer
 
     Returns:
-        Tuple[Dict[str, Any], int]: The adventurer data and HTTP status code
+        Tuple[Response, int]: The adventurer data and HTTP status code
     """
     try:
         adventurer = adventurer_service.get_adventurer(name)
@@ -74,11 +74,11 @@ def get_adventurer(name: str) -> Tuple[Dict[str, Any], int]:
 
 
 @adventurer_bp.route("/adventurers", methods=["GET"])
-def get_all_adventurers() -> Tuple[Dict[str, Any], int]:
+def get_all_adventurers() -> Tuple[Response, int]:
     """Get all adventurers.
 
     Returns:
-        Tuple[Dict[str, Any], int]: The list of adventurers and HTTP status code
+        Tuple[Response, int]: The list of adventurers and HTTP status code
     """
     try:
         adventurers = adventurer_service.get_all_adventurers()

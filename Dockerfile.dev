@@ -1,0 +1,25 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_ENV=development
+ENV FLASK_APP=src.wsgi:app
+ENV SECRET_KEY=dev_secret_key
+ENV DATABASE_URL=sqlite:///instance/side_quest_dev.db
+
+# Install dependencies
+COPY requirements.txt requirements-dev.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
+# Install the project
+COPY pyproject.toml setup.py /app/
+RUN pip install -e .
+
+# Expose port
+EXPOSE 5000
+
+# Run Flask development server
+CMD ["flask", "run", "--host", "0.0.0.0", "--reload"] 
