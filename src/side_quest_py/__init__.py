@@ -4,10 +4,6 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from .routes.adventurer_routes import adventurer_bp
-from .routes.quest_routes import quest_bp
-from .routes.user_routes import user_bp
-
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
 migrate = Migrate()
@@ -39,6 +35,11 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+
+    # Import blueprints here to avoid circular imports
+    from .routes.adventurer_routes import adventurer_bp
+    from .routes.quest_routes import quest_bp
+    from .routes.user_routes import user_bp
 
     # Register blueprints
     app.register_blueprint(adventurer_bp, url_prefix="/api/v1")

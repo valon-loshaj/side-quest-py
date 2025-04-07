@@ -4,7 +4,7 @@ from typing import List
 
 from ulid import ULID
 
-from src.side_quest_py.models.adventurer import Adventurer
+from ..models.adventurer import Adventurer
 
 
 class UserValidationError(Exception):
