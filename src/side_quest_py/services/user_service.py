@@ -40,6 +40,36 @@ class UserService:
         except Exception as e:
             raise UserNotFoundError(f"User with ID: {user_id} not found") from e
 
+    def get_user_by_username(self, username: str) -> Optional[User]:
+        """
+        Get a user by their username.
+
+        Args:
+            username: The username of the user
+        """
+        try:
+            for user in self.users.values():
+                if user.username == username:
+                    return user
+            return None
+        except Exception as e:
+            raise UserNotFoundError(f"User with username: {username} not found") from e
+
+    def get_user_by_token(self, token: str) -> Optional[User]:
+        """
+        Get a user by their authentication token.
+
+        Args:
+            token: The authentication token of the user
+        """
+        try:
+            for user in self.users.values():
+                if user.auth_token == token:
+                    return user
+            return None
+        except Exception as e:
+            raise UserNotFoundError(f"Error: User with token: {token} not found. {e}") from e
+
     def get_all_users(self) -> List[User]:
         """Get all users."""
         return list(self.users.values())
@@ -78,7 +108,7 @@ class UserService:
             del self.users[user_id]
         except Exception as e:
             raise UserServiceError(f"Error deleting user: {str(e)}") from e
-        
+
     def add_adventurer(self, user_id: str, adventurer_id: str) -> User:
         """
         Add an adventurer to a user.
@@ -99,7 +129,7 @@ class UserService:
             return user
         except (TypeError, ValueError) as e:
             raise UserServiceError(f"Error adding adventurer to user: {str(e)}") from e
-    
+
     def user_to_dict(self, user: User) -> Dict[str, Any]:
         """
         Convert a User object to a dictionary.
@@ -107,9 +137,17 @@ class UserService:
         Args:
             user: The User object to convert
         """
-        return {
+        user_dict = {
             "id": user.id,
             "username": user.username,
             "email": user.email,
             "adventurers": [adventurer.name for adventurer in user.adventurers],
         }
+
+        # Include auth token and expiry if they exist
+        if user.auth_token:
+            user_dict["auth_token"] = user.auth_token
+            if user.token_expiry:
+                user_dict["token_expiry"] = user.token_expiry.isoformat()
+
+        return user_dict
