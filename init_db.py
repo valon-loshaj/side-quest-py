@@ -7,7 +7,7 @@ from src.side_quest_py import create_app, db
 from src.side_quest_py.config import config
 
 # Import the SQLAlchemy models
-from src.side_quest_py.models.db_models import Adventurer, Quest, QuestCompletion
+from src.side_quest_py.models.db_models import Adventurer, Quest
 
 # Load environment variables from .env file
 load_dotenv()

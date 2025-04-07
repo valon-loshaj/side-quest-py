@@ -1,30 +1,20 @@
 from dataclasses import dataclass, field
 from typing import Set, Tuple
 
-
 class AdventurerValidationError(Exception):
     """Raised when an adventurer fails validation."""
-
-    pass
-
 
 class AdventurerExperienceError(Exception):
     """Raised when there's an error related to experience gain or calculation."""
 
-    pass
-
-
 class AdventurerLevelError(Exception):
     """Raised when there's an error related to level calculations or leveling up."""
-
-    pass
-
 
 class AdventurerQuestError(Exception):
     """Raised when there's an error related to quest completion."""
 
-    pass
-
+class AdventurerNotFoundError(Exception):
+    """Raised when an adventurer is not found."""
 
 class LevelCalculator:
     """Handles the logic necessary when an adventurer levels up"""

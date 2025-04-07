@@ -31,7 +31,7 @@ class QuestService:
         except QuestValidationError as e:
             raise e
         except Exception as e:
-            raise QuestValidationError(f"Error creating quest: {str(e)}")
+            raise QuestValidationError(f"Error creating quest: {str(e)}") from e
 
     def get_quest(self, quest_id: str) -> Optional[Quest]:
         """
@@ -43,7 +43,7 @@ class QuestService:
         try:
             return self.quests.get(quest_id)
         except Exception as e:
-            raise QuestNotFoundError(f"Quest with ID: {quest_id} not found")
+            raise QuestNotFoundError(f"Quest with ID: {quest_id} not found") from e
 
     def get_all_quests(self) -> List[Quest]:
         """
@@ -52,7 +52,7 @@ class QuestService:
         try:
             return list(self.quests.values())
         except Exception as e:
-            raise QuestServiceError(f"Error getting all quests: {str(e)}")
+            raise QuestServiceError(f"Error getting all quests: {str(e)}") from e
 
     def complete_quest(self, quest_id: str) -> Quest:
         """
@@ -70,7 +70,7 @@ class QuestService:
         except QuestCompletionError as e:
             raise e
         except Exception as e:
-            raise QuestCompletionError(f"Error completing quest: {str(e)}")
+            raise QuestCompletionError(f"Error completing quest: {str(e)}") from e
 
     def quest_to_dict(self, quest: Quest) -> Dict[str, Any]:
         """
