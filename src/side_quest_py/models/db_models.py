@@ -1,4 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -62,6 +61,9 @@ class User(db.Model):  # type: ignore
     id = Column(String(36), primary_key=True)
     username = Column(String(100), nullable=False, unique=True)
     email = Column(String(100), nullable=False, unique=True)
+    password_hash = Column(String(128), nullable=False)
+    auth_token = Column(String(128), nullable=True)
+    token_expiry = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

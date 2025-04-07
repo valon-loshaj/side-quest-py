@@ -40,10 +40,12 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     from .routes.adventurer_routes import adventurer_bp
     from .routes.quest_routes import quest_bp
     from .routes.user_routes import user_bp
+    from .routes.auth_routes import auth_bp
 
     # Register blueprints
     app.register_blueprint(adventurer_bp, url_prefix="/api/v1")
     app.register_blueprint(quest_bp, url_prefix="/api/v1")
     app.register_blueprint(user_bp, url_prefix="/api/v1")
+    app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
 
     return app
