@@ -1,31 +1,60 @@
 from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+import secrets
+import string
+import bcrypt
 
-from ..models.user import User, UserNotFoundError, UserServiceError, UserValidationError
+from ..models.user import UserNotFoundError, UserServiceError, UserValidationError
+from ..models.db_models import Adventurer, User
 from ..models.adventurer import AdventurerNotFoundError
 from ..services.adventurer_service import AdventurerService
+from .. import db
 
 class UserService:
     """Service for handling user-related operations."""
 
-    def __init__(self) -> None:
-        """Initialize the user service with an in-memory store."""
-        self.users: Dict[str, User] = {}
-
-    def create_user(self, username: str, email: str) -> User:
+    def create_user(self, username: str, email: str, password: Optional[str] = None) -> User:
         """
         Create a new user.
 
         Args:
             username: The username of the user
             email: The email of the user
+            password: Optional password (will be hashed if provided)
         """
         try:
-            user = User(username=username, email=email)
-            self.users[user.id] = user
+            # Check if user with the same username already exists
+            existing_user = self.get_user_by_username(username)
+            if existing_user:
+                raise UserValidationError(f"User with username '{username}' already exists")
+
+            # Check if user with the same email already exists
+            existing_email = User.query.filter_by(email=email).first()
+            if existing_email:
+                raise UserValidationError(f"User with email '{email}' already exists")
+
+            # Create new user
+            user = User(
+                username=username,
+                email=email,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+
+            # Hash the password if provided
+            if password:
+                user.password_hash = self._hash_password(password)  # type: ignore
+
+            # Add to database
+            db.session.add(user)
+            db.session.commit()
+
             return user
         except UserValidationError as e:
+            db.session.rollback()
             raise e
         except Exception as e:
+            db.session.rollback()
             raise UserServiceError(f"Error creating user: {str(e)}") from e
 
     def get_user(self, user_id: str) -> Optional[User]:
@@ -33,10 +62,10 @@ class UserService:
         Get a user by their ID.
 
         Args:
-            user_id: The ULID string ID of the user
+            user_id: The string ID of the user
         """
         try:
-            return self.users.get(user_id)
+            return User.query.get(user_id) # type: ignore
         except Exception as e:
             raise UserNotFoundError(f"User with ID: {user_id} not found") from e
 
@@ -48,10 +77,7 @@ class UserService:
             username: The username of the user
         """
         try:
-            for user in self.users.values():
-                if user.username == username:
-                    return user
-            return None
+            return User.query.filter_by(username=username).first() # type: ignore
         except Exception as e:
             raise UserNotFoundError(f"User with username: {username} not found") from e
 
@@ -63,23 +89,20 @@ class UserService:
             token: The authentication token of the user
         """
         try:
-            for user in self.users.values():
-                if user.auth_token == token:
-                    return user
-            return None
+            return User.query.filter_by(auth_token=token).first() # type: ignore
         except Exception as e:
             raise UserNotFoundError(f"Error: User with token: {token} not found. {e}") from e
 
     def get_all_users(self) -> List[User]:
         """Get all users."""
-        return list(self.users.values())
+        return User.query.all() # type: ignore
 
     def update_user(self, user_id: str, username: Optional[str] = None, email: Optional[str] = None) -> User:
         """
         Update a user's information.
 
         Args:
-            user_id: The ULID string ID of the user
+            user_id: The string ID of the user
             username: The new username for the user
             email: The new email for the user
         """
@@ -87,48 +110,184 @@ class UserService:
             user = self.get_user(user_id)
             if user is None:
                 raise UserNotFoundError(f"User with ID: {user_id} not found")
-            if username:
-                user.username = username
-            if email:
-                user.email = email
+
+            # Check username uniqueness if changing
+            if username and username != user.username:
+                existing = User.query.filter_by(username=username).first()
+                if existing and existing.id != user_id:
+                    raise UserValidationError(f"Username '{username}' is already taken")
+                user.username = username  # type: ignore
+
+            # Check email uniqueness if changing
+            if email and email != user.email:
+                existing = User.query.filter_by(email=email).first()
+                if existing and existing.id != user_id:
+                    raise UserValidationError(f"Email '{email}' is already in use")
+                user.email = email  # type: ignore
+
+            # Update timestamp
+            user.updated_at = datetime.now()  # type: ignore
+
+            db.session.commit()
             return user
-        except UserNotFoundError as e:
+        except (UserNotFoundError, UserValidationError) as e:
+            db.session.rollback()
             raise e
         except Exception as e:
+            db.session.rollback()
             raise UserServiceError(f"Error updating user: {str(e)}") from e
 
-    def delete_user(self, user_id: str) -> None:
+    def delete_user(self, user_id: str) -> bool:
         """
         Delete a user by their ID.
 
         Args:
-            user_id: The ULID string ID of the user
+            user_id: The string ID of the user
+
+        Returns:
+            bool: True if the user was deleted
         """
         try:
-            del self.users[user_id]
-        except Exception as e:
-            raise UserServiceError(f"Error deleting user: {str(e)}") from e
-
-    def add_adventurer(self, user_id: str, adventurer_id: str) -> User:
-        """
-        Add an adventurer to a user.
-
-        Args:
-            user_id: The ULID string ID of the user 
-            adventurer_id: The ULID string ID of the adventurer
-        """
-        try:
-            adventurer_service = AdventurerService()
             user = self.get_user(user_id)
             if user is None:
                 raise UserNotFoundError(f"User with ID: {user_id} not found")
-            adventurer = adventurer_service.get_adventurer(adventurer_id)
+
+            db.session.delete(user)
+            db.session.commit()
+            return True
+        except UserNotFoundError as e:
+            raise e
+        except Exception as e:
+            db.session.rollback()
+            raise UserServiceError(f"Error deleting user: {str(e)}") from e
+
+    def add_adventurer(self, user_id: str, adventurer_name: str) -> User:
+        """
+        Associate an existing adventurer with a user.
+
+        Args:
+            user_id: The string ID of the user 
+            adventurer_name: The name of the adventurer
+            
+        Returns:
+            User: The updated user
+        """
+        try:
+            adventurer_service = AdventurerService()
+
+            user = self.get_user(user_id)
+            if user is None:
+                raise UserNotFoundError(f"User with ID: {user_id} not found")
+
+            adventurer = adventurer_service.get_adventurer(adventurer_name)
             if adventurer is None:
-                raise AdventurerNotFoundError(f"Adventurer with ID: {adventurer_id} not found")
-            user.adventurers.append(adventurer)
+                raise AdventurerNotFoundError(f"Adventurer with name: {adventurer_name} not found")
+
+            # Update the adventurer's user_id
+            adventurer.user_id = user_id  # type: ignore
+
+            # Update timestamp
+            user.updated_at = datetime.now()  # type: ignore
+
+            db.session.commit()
             return user
-        except (TypeError, ValueError) as e:
+        except (UserNotFoundError, AdventurerNotFoundError) as e:
+            db.session.rollback()
+            raise e
+        except Exception as e:
+            db.session.rollback()
             raise UserServiceError(f"Error adding adventurer to user: {str(e)}") from e
+
+    def authenticate_user(self, username: str, password: str) -> User:
+        """
+        Authenticate a user with username and password.
+        
+        Args:
+            username: The username of the user
+            password: The password of the user
+            
+        Returns:
+            User: The authenticated user
+            
+        Raises:
+            UserNotFoundError: If user not found
+            UserValidationError: If authentication fails
+        """
+        try:
+            user = self.get_user_by_username(username)
+            if user is None:
+                raise UserNotFoundError(f"User with username: {username} not found")
+
+            # Verify the password using bcrypt
+            if not user.password_hash or not self._check_password(password, user.password_hash):  # type: ignore
+                raise UserValidationError("Invalid username or password")
+
+            # Generate new auth token
+            token = self._generate_auth_token()
+            user.auth_token = token  # type: ignore
+            user.token_expiry = datetime.now() + timedelta(hours=24)  # type: ignore
+
+            db.session.commit()
+            return user
+        except (UserNotFoundError, UserValidationError) as e:
+            raise e
+        except Exception as e:
+            db.session.rollback()
+            raise UserServiceError(f"Error authenticating user: {str(e)}") from e
+
+    def set_password(self, user_id: str, password: str) -> User:
+        """
+        Set or update a user's password.
+
+        Args:
+            user_id: The ID of the user
+            password: The new password (will be hashed)
+            
+        Returns:
+            User: The updated user
+        """
+        try:
+            user = self.get_user(user_id)
+            if user is None:
+                raise UserNotFoundError(f"User with ID: {user_id} not found")
+
+            # Hash the password
+            user.password_hash = self._hash_password(password)  # type: ignore
+            user.updated_at = datetime.now()  # type: ignore
+
+            db.session.commit()
+            return user
+        except UserNotFoundError as e:
+            raise e
+        except Exception as e:
+            db.session.rollback()
+            raise UserServiceError(f"Error setting password: {str(e)}") from e
+
+    def invalidate_token(self, user_id: str) -> bool:
+        """
+        Invalidate a user's authentication token (logout).
+        
+        Args:
+            user_id: The ID of the user
+            
+        Returns:
+            bool: True if successful
+        """
+        try:
+            user = self.get_user(user_id)
+            if user is None:
+                raise UserNotFoundError(f"User with ID: {user_id} not found")
+
+            user.auth_token = None  # type: ignore
+            user.token_expiry = None  # type: ignore
+
+            db.session.commit()
+            return True
+        except UserNotFoundError as e:
+            raise e
+        except Exception as e:
+            db.session.rollback()
+            raise UserServiceError(f"Error invalidating token: {str(e)}") from e
 
     def user_to_dict(self, user: User) -> Dict[str, Any]:
         """
@@ -137,11 +296,16 @@ class UserService:
         Args:
             user: The User object to convert
         """
+        # Get the user's adventurers
+        adventurers = Adventurer.query.filter_by(user_id=user.id).all()
+
         user_dict = {
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "adventurers": [adventurer.name for adventurer in user.adventurers],
+            "adventurers": [adventurer.name for adventurer in adventurers],
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "updated_at": user.updated_at.isoformat() if user.updated_at else None,
         }
 
         # Include auth token and expiry if they exist
@@ -151,3 +315,22 @@ class UserService:
                 user_dict["token_expiry"] = user.token_expiry.isoformat()
 
         return user_dict
+
+    def _generate_auth_token(self) -> str:
+        """Generate a secure random token."""
+
+        alphabet = string.ascii_letters + string.digits
+        return ''.join(secrets.choice(alphabet) for _ in range(64))
+
+    def _hash_password(self, password: str) -> str:
+        """Hash a password using bcrypt."""
+        password_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        return hashed.decode('utf-8')
+
+    def _check_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Check if a plain text password matches the hashed version."""
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
