@@ -1,8 +1,8 @@
 from typing import Optional, Union
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
