@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from src.side_quest_py.models.user import User, UserNotFoundError, UserServiceError, UserValidationError
-from src.side_quest_py.models.adventurer import AdventurerNotFoundError
-from src.side_quest_py.services.adventurer_service import AdventurerService
+from ..models.user import User, UserNotFoundError, UserServiceError, UserValidationError
+from ..models.adventurer import AdventurerNotFoundError
+from ..services.adventurer_service import AdventurerService
 
 class UserService:
     """Service for handling user-related operations."""
