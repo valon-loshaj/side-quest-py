@@ -4,6 +4,10 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
+from .routes.adventurer_routes import adventurer_bp
+from .routes.quest_routes import quest_bp
+from .routes.user_routes import user_bp
+
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
 migrate = Migrate()
@@ -37,10 +41,8 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     migrate.init_app(app, db)
 
     # Register blueprints
-    from .routes.adventurer_routes import adventurer_bp
-    from .routes.quest_routes import quest_bp
-
     app.register_blueprint(adventurer_bp, url_prefix="/api/v1")
     app.register_blueprint(quest_bp, url_prefix="/api/v1")
+    app.register_blueprint(user_bp, url_prefix="/api/v1")
 
     return app

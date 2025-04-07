@@ -1,9 +1,9 @@
-from typing import Any, Dict, Tuple
+from typing import Tuple
 
 from flask import Blueprint, Response, jsonify, request
 
-from ..models.quest import QuestCompletionError, QuestValidationError
-from ..services.quest_service import QuestService
+from ..models.quest import QuestCompletionError, QuestNotFoundError, QuestValidationError
+from ..services.quest_service import QuestService, QuestServiceError
 
 quest_bp = Blueprint("quest", __name__)
 quest_service = QuestService()
@@ -43,8 +43,10 @@ def create_quest() -> Tuple[Response, int]:
 
     except QuestValidationError as e:
         return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+    except QuestServiceError as e:
+        return jsonify({"error": str(e)}), 500
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
 
 # Route 2: Complete Quest
@@ -78,17 +80,14 @@ def complete_quest(quest_id: str) -> Tuple[Response, int]:
             ),
             200,
         )
+    except QuestNotFoundError as e:
+        return jsonify({"error": f"Quest with ID: {quest_id} not found", "details": str(e)}), 404
     except QuestCompletionError as e:
-        return jsonify({"error": f"Unable to complete quest with ID: {quest_id}"}), 400
-    except Exception as e:
-        return (
-            jsonify(
-                {
-                    "error": f"Unexpected error occurred when completing quest with ID: {quest_id}"
-                }
-            ),
-            500,
-        )
+        return jsonify({"error": f"Unable to complete quest with ID: {quest_id}", "details": str(e)}), 400
+    except QuestServiceError as e:
+        return jsonify({"error": f"Error completing quest with ID: {quest_id}", "details": str(e)}), 500
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": f"Invalid input for quest with ID: {quest_id}", "details": str(e)}), 400
 
 
 # Route 3: Get Quests
@@ -103,8 +102,8 @@ def get_quests() -> Tuple[Response, int]:
     try:
         quests = quest_service.get_all_quests()
         return jsonify([quest_service.quest_to_dict(quest) for quest in quests]), 200
-    except Exception as e:
-        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+    except QuestServiceError as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Route 4: Get Quest by ID
@@ -124,5 +123,7 @@ def get_quest_by_id(quest_id: str) -> Tuple[Response, int]:
         if not quest:
             return jsonify({"error": f"Quest with ID: {quest_id} not found"}), 404
         return jsonify({"quest": quest_service.quest_to_dict(quest)}), 200
-    except Exception as e:
-        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+    except QuestNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except QuestServiceError as e:
+        return jsonify({"error": str(e)}), 500

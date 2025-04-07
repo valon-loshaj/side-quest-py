@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 from ulid import ULID
 
@@ -7,26 +6,14 @@ from ulid import ULID
 class QuestValidationError(Exception):
     """Raised when a quest fails validation."""
 
-    pass
-
-
 class QuestCompletionError(Exception):
     """Raised when there's an error completing a quest."""
-
-    pass
-
 
 class QuestNotFoundError(Exception):
     """Raised when a quest is not found."""
 
-    pass
-
-
 class QuestServiceError(Exception):
     """Raised when there's an error in the quest service."""
-
-    pass
-
 
 @dataclass
 class Quest:
@@ -55,11 +42,11 @@ class Quest:
             self._validate_title()
             self._validate_experience_reward()
         except ValueError as e:
-            raise QuestValidationError(f"Error validating quest: {str(e)}")
+            raise QuestValidationError(f"Error validating quest: {str(e)}") from e
         except Exception as e:
             raise QuestValidationError(
                 f"Unexpected error occurred when validating quest: {str(e)}"
-            )
+            ) from e
 
     def _validate_title(self) -> None:
         """Validate the quest title."""
@@ -92,11 +79,11 @@ class Quest:
                 raise QuestCompletionError("Quest is already completed")
             self.completed = True
         except ValueError as e:
-            raise QuestCompletionError(f"Error completing quest: {str(e)}")
+            raise QuestCompletionError(f"Error completing quest: {str(e)}") from e
         except Exception as e:
             raise QuestCompletionError(
                 f"Unexpected error occurred when completing quest: {str(e)}"
-            )
+            ) from e
 
     @property
     def is_completed(self) -> bool:
@@ -109,4 +96,4 @@ class Quest:
         try:
             return self.completed
         except Exception as e:
-            raise ValueError(f"Error checking if quest is completed: {str(e)}")
+            raise ValueError(f"Error checking if quest is completed: {str(e)}") from e
