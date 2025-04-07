@@ -1,8 +1,8 @@
-from typing import Any, Dict, Tuple, Union
+from typing import Tuple
 
 from flask import Blueprint, Response, jsonify, request
 
-from ..models.adventurer import AdventurerValidationError
+from ..models.adventurer import AdventurerNotFoundError, AdventurerValidationError
 from ..services.adventurer_service import AdventurerService
 
 adventurer_bp = Blueprint("adventurer", __name__)
@@ -46,7 +46,9 @@ def create_adventurer() -> Tuple[Response, int]:
 
     except AdventurerValidationError as e:
         return jsonify({"error": str(e)}), 400
-    except Exception as e:
+    except AdventurerNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except (TypeError, ValueError) as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
@@ -71,7 +73,7 @@ def get_adventurer(name: str) -> Tuple[Response, int]:
             200,
         )
 
-    except Exception as e:
+    except (TypeError, ValueError) as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
@@ -98,5 +100,44 @@ def get_all_adventurers() -> Tuple[Response, int]:
             200,
         )
 
-    except Exception as e:
+    except (TypeError, ValueError) as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+
+@adventurer_bp.route("/adventurer/<name>/quest/<quest_id>", methods=["POST"])
+def complete_quest(name: str, quest_id: str) -> Tuple[Response, int]:
+    """Record quest completion for an adventurer.
+
+    Args:
+        name: The name of the adventurer
+        quest_id: The ID of the quest
+
+    Returns:
+        Tuple[Response, int]: The result and HTTP status code
+    """
+    try:
+        data = request.get_json() or {}
+        experience_gain = data.get("experience_gain", 0)
+
+        result = adventurer_service.complete_quest(name, quest_id, experience_gain)
+
+        if result is None:
+            return jsonify({"error": f"Adventurer {name} not found"}), 404
+
+        adventurer = adventurer_service.get_adventurer(name)
+        assert adventurer is not None
+
+        return (
+            jsonify({
+                "message": f"Quest {quest_id} processed for adventurer {name}",
+                "was_new_completion": result["was_new_completion"],
+                "leveled_up": result["leveled_up"],
+                "adventurer": adventurer_service.adventurer_to_dict(adventurer),
+            }),
+            200,
+        )
+
+    except AdventurerValidationError as e:
+        return jsonify({"error": str(e)}), 400
+    except (TypeError) as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500

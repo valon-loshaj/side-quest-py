@@ -1,8 +1,11 @@
 from typing import Optional, Tuple
+from datetime import datetime
 import bcrypt
 
-from ..models.user import User, AuthenticationError, UserNotFoundError
+from ..models.user import AuthenticationError, UserNotFoundError
+from ..models.db_models import User
 from ..services.user_service import UserService
+from .. import db
 
 class AuthService:
     """Service for handling authentication-related operations."""
@@ -54,13 +57,13 @@ class AuthService:
         Returns:
             User: The newly created user object
         """
-        # Create the user
-        user = self.user_service.create_user(username, email)
-
-        # Hash the password and store it
-        user.password_hash = self.hash_password(password)
-
-        return user
+        try:
+            # Create the user with the password
+            user = self.user_service.create_user(username, email, password)
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise AuthenticationError(f"Error registering user: {str(e)}") from e
 
     def authenticate(self, username: str, password: str) -> Tuple[User, str]:
         """
@@ -76,19 +79,19 @@ class AuthService:
         Raises:
             AuthenticationError: If the authentication fails
         """
-        # Find the user by username
-        user = self.user_service.get_user_by_username(username)
-        if not user:
-            raise AuthenticationError("Invalid username or password")
+        try:
+            # Use the user_service to authenticate
+            user = self.user_service.authenticate_user(username, password)
 
-        # Check the password
-        if not user.password_hash or not self.check_password(password, user.password_hash):
-            raise AuthenticationError("Invalid username or password")
+            # Return the user and their token
+            if not user.auth_token:
+                raise AuthenticationError("Failed to generate auth token")
 
-        # Generate a new authentication token
-        token = user.generate_auth_token()
-
-        return user, token
+            return user, user.auth_token  # type: ignore
+        except UserNotFoundError as user_not_found_error:
+            raise AuthenticationError("Invalid username or password") from user_not_found_error
+        except Exception as e:
+            raise AuthenticationError(f"Authentication failed: {str(e)}") from e
 
     def validate_token(self, token: str) -> Optional[User]:
         """
@@ -103,7 +106,7 @@ class AuthService:
         # Find the user with this token
         user = self.user_service.get_user_by_token(token)
 
-        if not user or not user.is_token_valid():
+        if not user or not self._is_token_valid(user):
             return None
 
         return user
@@ -115,8 +118,18 @@ class AuthService:
         Args:
             user_id: The ID of the user to logout
         """
-        user = self.user_service.get_user(user_id)
-        if not user:
-            raise UserNotFoundError(f"User with ID: {user_id} not found")
+        try:
+            self.user_service.invalidate_token(user_id)
+        except UserNotFoundError as e:
+            raise e
+        except Exception as e:
+            raise AuthenticationError(f"Logout failed: {str(e)}") from e
 
-        user.invalidate_token()
+    def _is_token_valid(self, user: User) -> bool:
+        """Check if the user's token is valid and not expired."""
+
+        return bool(
+            user.auth_token is not None
+            and user.token_expiry is not None
+            and user.token_expiry > datetime.now()
+        )

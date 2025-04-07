@@ -6,7 +6,7 @@ import string
 
 from ulid import ULID
 
-from ..models.adventurer import Adventurer
+from ..models.db_models import Adventurer
 
 
 class UserValidationError(Exception):
