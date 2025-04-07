@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from side_quest_py.models.quest import (
+from ..models.quest import (
     Quest,
     QuestCompletionError,
     QuestNotFoundError,

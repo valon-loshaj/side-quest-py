@@ -1,6 +1,7 @@
 python-ulid==3.0.0
 Flask==3.0.2
 Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.1.0
 SQLAlchemy==2.0.40
 typing-extensions==4.13.0
 python-dotenv==1.0.1
