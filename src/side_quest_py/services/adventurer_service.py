@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from side_quest_py.models.adventurer import Adventurer, AdventurerValidationError
+from ..models.adventurer import Adventurer, AdventurerValidationError
 
 
 class AdventurerService:

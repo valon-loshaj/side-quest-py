@@ -2,9 +2,11 @@ from typing import Optional, Union
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
+migrate = Migrate()
 
 
 def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
@@ -32,6 +34,7 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
 
     # Register blueprints
     from .routes.adventurer_routes import adventurer_bp

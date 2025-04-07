@@ -2,8 +2,8 @@ from typing import Any, Dict, Tuple
 
 from flask import Blueprint, Response, jsonify, request
 
-from side_quest_py.models.quest import QuestCompletionError, QuestValidationError
-from side_quest_py.services.quest_service import QuestService
+from ..models.quest import QuestCompletionError, QuestValidationError
+from ..services.quest_service import QuestService
 
 quest_bp = Blueprint("quest", __name__)
 quest_service = QuestService()
