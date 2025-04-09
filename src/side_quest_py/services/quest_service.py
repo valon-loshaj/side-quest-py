@@ -63,7 +63,8 @@ class QuestService:
             QuestNotFoundError: If there's an error finding the quest
         """
         try:
-            return Quest.query.get(quest_id)  # type: ignore
+            quest: Optional[Quest] = Quest.query.get(quest_id)
+            return quest
         except Exception as e:
             raise QuestNotFoundError(f"Quest with ID: {quest_id} not found") from e
 
@@ -78,7 +79,8 @@ class QuestService:
             QuestServiceError: If there's an error getting all quests
         """
         try:
-            return Quest.query.all()  # type: ignore
+            quests: List[Quest] = Quest.query.all()
+            return quests
         except Exception as e:
             raise QuestServiceError(f"Error getting all quests: {str(e)}") from e
 
@@ -93,7 +95,8 @@ class QuestService:
             QuestServiceError: If there's an error getting the quests
         """
         try:
-            return Quest.query.filter_by(completed=False).all()  # type: ignore
+            quests: List[Quest] = Quest.query.filter_by(completed=False).all()
+            return quests
         except Exception as e:
             raise QuestServiceError(f"Error getting uncompleted quests: {str(e)}") from e
 
@@ -119,7 +122,7 @@ class QuestService:
             if quest.completed:
                 raise QuestCompletionError("Quest is already completed")
 
-            quest.completed = True  # type: ignore
+            quest.completed = True
             db.session.commit()
 
             return quest

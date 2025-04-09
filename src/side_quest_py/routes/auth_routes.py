@@ -44,7 +44,6 @@ def login_required(f):
     return decorated_function
 
 
-# Route 1: Register a new user
 @auth_bp.route("/register", methods=["POST"])
 def register() -> Tuple[Response, int]:
     """
@@ -70,7 +69,6 @@ def register() -> Tuple[Response, int]:
         if not password:
             return jsonify({"error": "Password is required"}), 400
 
-        # Register the user
         user = auth_service.register_user(username=username, email=email, password=password)
 
         return (
@@ -86,7 +84,6 @@ def register() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-# Route 2: Authenticate a user
 @auth_bp.route("/login", methods=["POST"])
 def login() -> Tuple[Response, int]:
     """
@@ -109,7 +106,6 @@ def login() -> Tuple[Response, int]:
         if not password:
             return jsonify({"error": "Password is required"}), 400
 
-        # Authenticate the user
         user, token = auth_service.authenticate(username=username, password=password)
 
         return (
@@ -131,7 +127,6 @@ def login() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-# Route 3: Logout a user
 @auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout() -> Tuple[Response, int]:
@@ -154,7 +149,7 @@ def logout() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-# Route 4: Get the current authenticated user
+# Get the current authenticated user based on the token in the Authorization header
 @auth_bp.route("/me", methods=["GET"])
 @login_required
 def get_current_user() -> Tuple[Response, int]:

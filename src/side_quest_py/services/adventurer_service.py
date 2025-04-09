@@ -68,7 +68,8 @@ class AdventurerService:
         Returns:
             Optional[Adventurer]: The adventurer if found, None otherwise
         """
-        return Adventurer.query.filter_by(name=name).first()
+        adventurer: Optional[Adventurer] = Adventurer.query.filter_by(name=name).first()
+        return adventurer
 
     def get_all_adventurers(self) -> List[Adventurer]:
         """
@@ -77,7 +78,8 @@ class AdventurerService:
         Returns:
             List[Adventurer]: A list of all adventurers
         """
-        return Adventurer.query.all()
+        adventurers: List[Adventurer] = Adventurer.query.all()
+        return adventurers
 
     def delete_adventurer(self, name: str) -> bool:
         """
@@ -148,12 +150,12 @@ class AdventurerService:
             return None
 
         try:
-            adventurer.experience += experience_gain
+            adventurer.experience += experience_gain  # type: ignore
 
-            required_exp = self.level_calculator.calculate_req_exp(adventurer.level)
+            required_exp = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
             if adventurer.experience >= required_exp:
-                adventurer.level += 1
-                adventurer.experience = 0
+                adventurer.level += 1  # type: ignore
+                adventurer.experience = 0  # type: ignore
 
             db.session.commit()
             return adventurer
@@ -196,14 +198,14 @@ class AdventurerService:
 
                 old_level = adventurer.level
 
-                adventurer.experience += experience_gain
+                adventurer.experience += experience_gain  # type: ignore
 
-                required_exp = self.level_calculator.calculate_req_exp(old_level)
+                required_exp = self.level_calculator.calculate_req_exp(old_level)  # type: ignore
                 leveled_up = False
 
                 if adventurer.experience >= required_exp:
-                    adventurer.level += 1
-                    adventurer.experience = 0
+                    adventurer.level += 1  # type: ignore
+                    adventurer.experience = 0  # type: ignore
                     leveled_up = True
 
                 db.session.commit()
@@ -226,7 +228,7 @@ class AdventurerService:
         Returns:
             Dict[str, Any]: A dictionary representation of the adventurer
         """
-        experience_for_next_level = self.level_calculator.calculate_req_exp(adventurer.level)
+        experience_for_next_level = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
 
         progress_percentage = (
             (adventurer.experience / experience_for_next_level * 100) if experience_for_next_level > 0 else 100

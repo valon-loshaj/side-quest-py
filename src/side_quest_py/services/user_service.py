@@ -62,7 +62,8 @@ class UserService:
             user_id: The string ID of the user
         """
         try:
-            return User.query.get(user_id)  # type: ignore
+            user: Optional[User] = User.query.get(user_id)
+            return user
         except Exception as e:
             raise UserNotFoundError(f"User with ID: {user_id} not found") from e
 
@@ -74,7 +75,8 @@ class UserService:
             username: The username of the user
         """
         try:
-            return User.query.filter_by(username=username).first()  # type: ignore
+            user: Optional[User] = User.query.filter_by(username=username).first()
+            return user
         except Exception as e:
             raise UserNotFoundError(f"User with username: {username} not found") from e
 
@@ -86,13 +88,15 @@ class UserService:
             token: The authentication token of the user
         """
         try:
-            return User.query.filter_by(auth_token=token).first()  # type: ignore
+            user: Optional[User] = User.query.filter_by(auth_token=token).first()
+            return user
         except Exception as e:
             raise UserNotFoundError(f"Error: User with token: {token} not found. {e}") from e
 
     def get_all_users(self) -> List[User]:
         """Get all users."""
-        return User.query.all()  # type: ignore
+        users: List[User] = User.query.all()
+        return users
 
     def update_user(self, user_id: str, username: Optional[str] = None, email: Optional[str] = None) -> User:
         """
