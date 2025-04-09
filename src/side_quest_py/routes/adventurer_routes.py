@@ -30,9 +30,7 @@ def create_adventurer() -> Tuple[Response, int]:
         level = data.get("level", 1)
         experience = data.get("experience", 0)
 
-        adventurer = adventurer_service.create_adventurer(
-            name=name, level=level, experience=experience
-        )
+        adventurer = adventurer_service.create_adventurer(name=name, level=level, experience=experience)
 
         return (
             jsonify(
@@ -90,10 +88,7 @@ def get_all_adventurers() -> Tuple[Response, int]:
         return (
             jsonify(
                 {
-                    "adventurers": [
-                        adventurer_service.adventurer_to_dict(adventurer)
-                        for adventurer in adventurers
-                    ],
+                    "adventurers": [adventurer_service.adventurer_to_dict(adventurer) for adventurer in adventurers],
                     "count": len(adventurers),
                 }
             ),
@@ -128,16 +123,18 @@ def complete_quest(name: str, quest_id: str) -> Tuple[Response, int]:
         assert adventurer is not None
 
         return (
-            jsonify({
-                "message": f"Quest {quest_id} processed for adventurer {name}",
-                "was_new_completion": result["was_new_completion"],
-                "leveled_up": result["leveled_up"],
-                "adventurer": adventurer_service.adventurer_to_dict(adventurer),
-            }),
+            jsonify(
+                {
+                    "message": f"Quest {quest_id} processed for adventurer {name}",
+                    "was_new_completion": result["was_new_completion"],
+                    "leveled_up": result["leveled_up"],
+                    "adventurer": adventurer_service.adventurer_to_dict(adventurer),
+                }
+            ),
             200,
         )
 
     except AdventurerValidationError as e:
         return jsonify({"error": str(e)}), 400
-    except (TypeError) as e:
+    except TypeError as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500

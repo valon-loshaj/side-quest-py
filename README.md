@@ -36,7 +36,7 @@ DATABASE_URL=sqlite:///instance/side_quest_dev.db
 
 The application uses different database configurations based on the environment:
 - **Development**: `sqlite:///instance/side_quest_dev.db` (default)
-- **Testing**: `sqlite:///instance/side_quest_test.db` 
+- **Testing**: `sqlite:///instance/side_quest_test.db`
 - **Production**: Set `DATABASE_URL` to a production database (PostgreSQL recommended)
 
 ### 4. Initialize the database

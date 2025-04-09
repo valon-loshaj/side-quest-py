@@ -22,9 +22,7 @@ def test_create_quest(client):
     assert response.status_code == 201
 
     # Assert message contains the quest title
-    assert (
-        f"Quest {test_data['title']} created successfully" in response.json["message"]
-    )
+    assert f"Quest {test_data['title']} created successfully" in response.json["message"]
 
     # Assert quest data is returned
     assert "quest" in response.json
@@ -92,9 +90,7 @@ def test_get_all_quests(client):
     for quest in test_data:
         response = client.post("/api/v1/quest", json=quest)
         assert response.status_code == 201
-        assert (
-            f"Quest {quest['title']} created successfully" in response.json["message"]
-        )
+        assert f"Quest {quest['title']} created successfully" in response.json["message"]
 
     # Get all quests
     response = client.get("/api/v1/quests")

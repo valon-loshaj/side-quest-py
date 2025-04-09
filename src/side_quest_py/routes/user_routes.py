@@ -8,6 +8,7 @@ from ..services.user_service import UserService
 user_bp = Blueprint("user", __name__)
 user_service = UserService()
 
+
 # Route 1: Create User
 @user_bp.route("/user", methods=["POST"])
 def create_user() -> Tuple[Response, int]:
@@ -34,15 +35,15 @@ def create_user() -> Tuple[Response, int]:
         user = user_service.create_user(username=username, email=email)
 
         return jsonify({"message": "User created successfully", "user": user_service.user_to_dict(user)}), 201
-    
+
     except UserValidationError as e:
         return jsonify({"error": str(e)}), 400
     except UserServiceError as e:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
         return jsonify({"error": str(e)}), 400
-    
-    
+
+
 # Route 2: Get User by ID
 @user_bp.route("/user/<string:user_id>", methods=["GET"])
 def get_user_by_id(user_id: str) -> Tuple[Response, int]:
@@ -57,16 +58,17 @@ def get_user_by_id(user_id: str) -> Tuple[Response, int]:
 
         if not user:
             return jsonify({"error": f"User with ID: {user_id} not found"}), 404
-        
+
         return jsonify({"user": user_service.user_to_dict(user)}), 200
-    
+
     except UserNotFoundError as e:
         return jsonify({"error": f"User with ID: {user_id} not found", "details": str(e)}), 404
     except UserServiceError as e:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
         return jsonify({"error": f"Invalid input for user with ID: {user_id}", "details": str(e)}), 400
-    
+
+
 # Route 3: Get All Users
 @user_bp.route("/users", methods=["GET"])
 def get_all_users() -> Tuple[Response, int]:
@@ -83,8 +85,8 @@ def get_all_users() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
         return jsonify({"error": str(e)}), 400
-    
-    
+
+
 # Route 4: Update User
 @user_bp.route("/user/<string:user_id>", methods=["PUT"])
 def update_user(user_id: str) -> Tuple[Response, int]:
@@ -115,8 +117,9 @@ def update_user(user_id: str) -> Tuple[Response, int]:
     except UserServiceError as e:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
-        return jsonify({"error": f"Invalid input for user with ID: {user_id}", "details": str(e)}), 400 
-    
+        return jsonify({"error": f"Invalid input for user with ID: {user_id}", "details": str(e)}), 400
+
+
 # Route 5: Delete User
 @user_bp.route("/user/<string:user_id>", methods=["DELETE"])
 def delete_user(user_id: str) -> Tuple[Response, int]:
@@ -133,6 +136,7 @@ def delete_user(user_id: str) -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
         return jsonify({"error": f"Invalid input for user with ID: {user_id}", "details": str(e)}), 400
+
 
 # Route 6: Add Adventurer to User
 @user_bp.route("/user/<string:user_id>/adventurer", methods=["POST"])

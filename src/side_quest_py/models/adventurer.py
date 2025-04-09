@@ -1,17 +1,31 @@
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import List
+
+from ulid import ULID
+
+from .quest_completion import QuestCompletion
+
+
 class AdventurerValidationError(Exception):
     """Raised when an adventurer fails validation."""
+
 
 class AdventurerExperienceError(Exception):
     """Raised when there's an error related to experience gain or calculation."""
 
+
 class AdventurerLevelError(Exception):
     """Raised when there's an error related to level calculations or leveling up."""
+
 
 class AdventurerQuestError(Exception):
     """Raised when there's an error related to quest completion."""
 
+
 class AdventurerNotFoundError(Exception):
     """Raised when an adventurer is not found."""
+
 
 class LevelCalculator:
     """Handles the logic necessary when an adventurer levels up"""
@@ -61,3 +75,60 @@ class LevelCalculator:
             return experience_gain >= required_exp
         except TypeError as e:
             raise AdventurerLevelError(f"Invalid input type: {str(e)}") from e
+
+
+@dataclass
+class Adventurer:
+    """
+    An adventurer is a character that can complete quests.
+    """
+
+    name: str
+    user_id: str
+    id: str = field(default_factory=lambda: str(ULID()))
+    level: int = field(default=1)
+    experience: int = field(default=0)
+    completed_quests: List[QuestCompletion] = field(default_factory=list)
+    leveled_up: bool = field(default=False)
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def __post_init__(self) -> None:
+        """
+        Validate the initial values when an adventurer is created.
+        """
+        try:
+            self._validate_name()
+            self._validate_level()
+            self._validate_experience()
+            self._validate_user_id()
+
+        except ValueError as e:
+            raise AdventurerValidationError(f"Error validating adventurer: {str(e)}") from e
+        except Exception as e:
+            raise AdventurerValidationError(f"Unexpected error occurred when validating adventurer: {str(e)}") from e
+
+    def _validate_name(self) -> None:
+        """Validate the adventurer's name."""
+        if not self.name or not self.name.strip():
+            raise AdventurerValidationError("Adventurer name cannot be empty")
+
+    def _validate_level(self) -> None:
+        """Validate the adventurer's level."""
+        if not isinstance(self.level, int) or self.level < 1:
+            raise AdventurerLevelError("Level must be a positive integer")
+
+    def _validate_experience(self) -> None:
+        """Validate the adventurer's experience."""
+        if not isinstance(self.experience, int) or self.experience < 0:
+            raise AdventurerExperienceError("Experience must be a non-negative integer")
+
+    def _validate_completed_quests(self) -> None:
+        """Validate the adventurer's completed quests."""
+        if not isinstance(self.completed_quests, list):
+            raise AdventurerQuestError("Completed quests must be a list")
+
+    def _validate_user_id(self) -> None:
+        """Validate the adventurer's user ID."""
+        if not isinstance(self.user_id, str) or not self.user_id.strip():
+            raise AdventurerValidationError("User ID cannot be empty")

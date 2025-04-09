@@ -15,10 +15,7 @@ def test_create_adventurer(client):
     assert response.status_code == 201
 
     # Assert message contains the adventurer name
-    assert (
-        f"Adventurer {test_data['name']} created successfully"
-        in response.json["message"]
-    )
+    assert f"Adventurer {test_data['name']} created successfully" in response.json["message"]
 
     # Assert adventurer data is returned
     assert "adventurer" in response.json

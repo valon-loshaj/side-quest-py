@@ -1,11 +1,13 @@
-from typing import Optional, Tuple
 from datetime import datetime
+from typing import Optional, Tuple
+
 import bcrypt
 
-from ..models.user import AuthenticationError, UserNotFoundError
-from ..models.db_models import User
-from ..services.user_service import UserService
 from .. import db
+from ..models.db_models import User
+from ..models.user import AuthenticationError, UserNotFoundError
+from ..services.user_service import UserService
+
 
 class AuthService:
     """Service for handling authentication-related operations."""
@@ -25,10 +27,10 @@ class AuthService:
             str: The hashed password
         """
         # Generate a salt and hash the password
-        password_bytes = password.encode('utf-8')
+        password_bytes = password.encode("utf-8")
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password_bytes, salt)
-        return hashed.decode('utf-8')
+        return hashed.decode("utf-8")
 
     def check_password(self, plain_password: str, hashed_password: str) -> bool:
         """
@@ -41,8 +43,8 @@ class AuthService:
         Returns:
             bool: True if the passwords match, False otherwise
         """
-        password_bytes = plain_password.encode('utf-8')
-        hashed_bytes = hashed_password.encode('utf-8')
+        password_bytes = plain_password.encode("utf-8")
+        hashed_bytes = hashed_password.encode("utf-8")
         return bcrypt.checkpw(password_bytes, hashed_bytes)
 
     def register_user(self, username: str, email: str, password: str) -> User:
@@ -127,9 +129,6 @@ class AuthService:
 
     def _is_token_valid(self, user: User) -> bool:
         """Check if the user's token is valid and not expired."""
-
         return bool(
-            user.auth_token is not None
-            and user.token_expiry is not None
-            and user.token_expiry > datetime.now()
+            user.auth_token is not None and user.token_expiry is not None and user.token_expiry > datetime.now()
         )

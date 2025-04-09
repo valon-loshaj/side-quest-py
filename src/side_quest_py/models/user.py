@@ -1,12 +1,12 @@
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import List, Optional
 import secrets
 import string
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Dict, Optional
 
 from ulid import ULID
 
-from ..models.db_models import Adventurer
+from .adventurer import Adventurer
 
 
 class UserValidationError(Exception):
@@ -36,7 +36,7 @@ class User:
         id: The unique identifier for the user
         created_at: The date and time the user was created
         updated_at: The date and time the user was last updated
-        adventurers: The adventurers associated with the user
+        adventurers: Dictionary of adventurers associated with the user, keyed by adventurer ID
     """
 
     username: str
@@ -47,7 +47,7 @@ class User:
     token_expiry: Optional[datetime] = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    adventurers: List[Adventurer] = field(default_factory=list)
+    adventurers: Dict[str, Adventurer] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """
@@ -68,17 +68,13 @@ class User:
 
     def is_token_valid(self) -> bool:
         """Check if the user's authentication token is valid."""
-        return (
-            self.auth_token is not None
-            and self.token_expiry is not None
-            and self.token_expiry > datetime.now()
-        )
+        return self.auth_token is not None and self.token_expiry is not None and self.token_expiry > datetime.now()
 
     def generate_auth_token(self) -> str:
         """Generate a new authentication token with 24-hour expiry."""
         # Generate a secure random token
         alphabet = string.ascii_letters + string.digits
-        self.auth_token = ''.join(secrets.choice(alphabet) for _ in range(64))
+        self.auth_token = "".join(secrets.choice(alphabet) for _ in range(64))
         self.token_expiry = datetime.now() + timedelta(hours=24)
         return self.auth_token
 
@@ -95,8 +91,17 @@ class User:
 
     def add_adventurer(self, adventurer: Adventurer) -> None:
         """Add an adventurer to the user."""
-        self.adventurers.append(adventurer)
+        self.adventurers[adventurer.id] = adventurer
 
-    def remove_adventurer(self, adventurer: Adventurer) -> None:
-        """Remove an adventurer from the user."""
-        self.adventurers.remove(adventurer)
+    def remove_adventurer(self, adventurer_id: str) -> None:
+        """Remove an adventurer from the user by ID."""
+        if adventurer_id in self.adventurers:
+            del self.adventurers[adventurer_id]
+
+    def get_adventurer(self, adventurer_id: str) -> Optional[Adventurer]:
+        """Get an adventurer by ID."""
+        return self.adventurers.get(adventurer_id)
+
+    def has_adventurer(self, adventurer_id: str) -> bool:
+        """Check if the user has an adventurer with the given ID."""
+        return adventurer_id in self.adventurers
