@@ -2,7 +2,11 @@ from typing import Tuple
 
 from flask import Blueprint, Response, jsonify, request
 
-from ..models.quest import QuestCompletionError, QuestNotFoundError, QuestValidationError
+from ..models.quest import (
+    QuestCompletionError,
+    QuestNotFoundError,
+    QuestValidationError,
+)
 from ..services.quest_service import QuestService, QuestServiceError
 
 quest_bp = Blueprint("quest", __name__)
@@ -75,9 +79,7 @@ def complete_quest(quest_id: str) -> Tuple[Response, int]:
         updated_quest = quest_service.complete_quest(quest_id)
         quest_dict = quest_service.quest_to_dict(updated_quest)
         return (
-            jsonify(
-                {"message": f"Quest with ID: {quest_id} completed", "quest": quest_dict}
-            ),
+            jsonify({"message": f"Quest with ID: {quest_id} completed", "quest": quest_dict}),
             200,
         )
     except QuestNotFoundError as e:

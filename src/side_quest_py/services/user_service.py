@@ -1,14 +1,16 @@
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
 import secrets
 import string
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import bcrypt
 
-from ..models.user import UserNotFoundError, UserServiceError, UserValidationError
-from ..models.db_models import Adventurer, User
-from ..models.adventurer import AdventurerNotFoundError
-from ..services.adventurer_service import AdventurerService
 from .. import db
+from ..models.adventurer import AdventurerNotFoundError
+from ..models.db_models import Adventurer, User
+from ..models.user import UserNotFoundError, UserServiceError, UserValidationError
+from ..services.adventurer_service import AdventurerService
+
 
 class UserService:
     """Service for handling user-related operations."""
@@ -34,12 +36,7 @@ class UserService:
                 raise UserValidationError(f"User with email '{email}' already exists")
 
             # Create new user
-            user = User(
-                username=username,
-                email=email,
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
+            user = User(username=username, email=email, created_at=datetime.now(), updated_at=datetime.now())
 
             # Hash the password if provided
             if password:
@@ -65,7 +62,7 @@ class UserService:
             user_id: The string ID of the user
         """
         try:
-            return User.query.get(user_id) # type: ignore
+            return User.query.get(user_id)  # type: ignore
         except Exception as e:
             raise UserNotFoundError(f"User with ID: {user_id} not found") from e
 
@@ -77,7 +74,7 @@ class UserService:
             username: The username of the user
         """
         try:
-            return User.query.filter_by(username=username).first() # type: ignore
+            return User.query.filter_by(username=username).first()  # type: ignore
         except Exception as e:
             raise UserNotFoundError(f"User with username: {username} not found") from e
 
@@ -89,13 +86,13 @@ class UserService:
             token: The authentication token of the user
         """
         try:
-            return User.query.filter_by(auth_token=token).first() # type: ignore
+            return User.query.filter_by(auth_token=token).first()  # type: ignore
         except Exception as e:
             raise UserNotFoundError(f"Error: User with token: {token} not found. {e}") from e
 
     def get_all_users(self) -> List[User]:
         """Get all users."""
-        return User.query.all() # type: ignore
+        return User.query.all()  # type: ignore
 
     def update_user(self, user_id: str, username: Optional[str] = None, email: Optional[str] = None) -> User:
         """
@@ -166,9 +163,9 @@ class UserService:
         Associate an existing adventurer with a user.
 
         Args:
-            user_id: The string ID of the user 
+            user_id: The string ID of the user
             adventurer_name: The name of the adventurer
-            
+
         Returns:
             User: The updated user
         """
@@ -201,14 +198,14 @@ class UserService:
     def authenticate_user(self, username: str, password: str) -> User:
         """
         Authenticate a user with username and password.
-        
+
         Args:
             username: The username of the user
             password: The password of the user
-            
+
         Returns:
             User: The authenticated user
-            
+
         Raises:
             UserNotFoundError: If user not found
             UserValidationError: If authentication fails
@@ -242,7 +239,7 @@ class UserService:
         Args:
             user_id: The ID of the user
             password: The new password (will be hashed)
-            
+
         Returns:
             User: The updated user
         """
@@ -266,10 +263,10 @@ class UserService:
     def invalidate_token(self, user_id: str) -> bool:
         """
         Invalidate a user's authentication token (logout).
-        
+
         Args:
             user_id: The ID of the user
-            
+
         Returns:
             bool: True if successful
         """
@@ -318,19 +315,18 @@ class UserService:
 
     def _generate_auth_token(self) -> str:
         """Generate a secure random token."""
-
         alphabet = string.ascii_letters + string.digits
-        return ''.join(secrets.choice(alphabet) for _ in range(64))
+        return "".join(secrets.choice(alphabet) for _ in range(64))
 
     def _hash_password(self, password: str) -> str:
         """Hash a password using bcrypt."""
-        password_bytes = password.encode('utf-8')
+        password_bytes = password.encode("utf-8")
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password_bytes, salt)
-        return hashed.decode('utf-8')
+        return hashed.decode("utf-8")
 
     def _check_password(self, plain_password: str, hashed_password: str) -> bool:
         """Check if a plain text password matches the hashed version."""
-        password_bytes = plain_password.encode('utf-8')
-        hashed_bytes = hashed_password.encode('utf-8')
+        password_bytes = plain_password.encode("utf-8")
+        hashed_bytes = hashed_password.encode("utf-8")
         return bcrypt.checkpw(password_bytes, hashed_bytes)

@@ -1,26 +1,32 @@
-from typing import Tuple
 from functools import wraps
+from typing import Any, Tuple
 
-from flask import Blueprint, Response, jsonify, request, g
+from flask import Blueprint, Response, g, jsonify, request
 
-from ..models.user import AuthenticationError, UserNotFoundError, UserServiceError, UserValidationError
+from ..models.user import (
+    AuthenticationError,
+    UserNotFoundError,
+    UserServiceError,
+    UserValidationError,
+)
 from ..services.auth_service import AuthService
 
 auth_bp = Blueprint("auth", __name__)
 auth_service = AuthService()
 
+
 # Helper decorator for routes that require authentication
 def login_required(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any):
         # Get the token from the Authorization header
-        auth_header = request.headers.get('Authorization')
+        auth_header = request.headers.get("Authorization")
         if not auth_header:
             return jsonify({"error": "Authorization header is required"}), 401
 
         # The format should be "Bearer <token>"
         parts = auth_header.split()
-        if len(parts) != 2 or parts[0].lower() != 'bearer':
+        if len(parts) != 2 or parts[0].lower() != "bearer":
             return jsonify({"error": "Authorization header must be in the format: Bearer <token>"}), 401
 
         token = parts[1]
@@ -34,7 +40,9 @@ def login_required(f):
         g.user = user
 
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 # Route 1: Register a new user
 @auth_bp.route("/register", methods=["POST"])
@@ -65,10 +73,10 @@ def register() -> Tuple[Response, int]:
         # Register the user
         user = auth_service.register_user(username=username, email=email, password=password)
 
-        return jsonify({
-            "message": "User registered successfully",
-            "user": auth_service.user_service.user_to_dict(user)
-        }), 201
+        return (
+            jsonify({"message": "User registered successfully", "user": auth_service.user_service.user_to_dict(user)}),
+            201,
+        )
 
     except UserValidationError as e:
         return jsonify({"error": str(e)}), 400
@@ -76,6 +84,7 @@ def register() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
         return jsonify({"error": str(e)}), 400
+
 
 # Route 2: Authenticate a user
 @auth_bp.route("/login", methods=["POST"])
@@ -103,11 +112,16 @@ def login() -> Tuple[Response, int]:
         # Authenticate the user
         user, token = auth_service.authenticate(username=username, password=password)
 
-        return jsonify({
-            "message": "Authentication successful",
-            "auth_token": token,
-            "user": auth_service.user_service.user_to_dict(user)
-        }), 200
+        return (
+            jsonify(
+                {
+                    "message": "Authentication successful",
+                    "auth_token": token,
+                    "user": auth_service.user_service.user_to_dict(user),
+                }
+            ),
+            200,
+        )
 
     except AuthenticationError as e:
         return jsonify({"error": str(e)}), 401
@@ -115,6 +129,7 @@ def login() -> Tuple[Response, int]:
         return jsonify({"error": str(e)}), 500
     except (ValueError, TypeError) as e:
         return jsonify({"error": str(e)}), 400
+
 
 # Route 3: Logout a user
 @auth_bp.route("/logout", methods=["POST"])
@@ -138,6 +153,7 @@ def logout() -> Tuple[Response, int]:
     except (ValueError, TypeError) as e:
         return jsonify({"error": str(e)}), 400
 
+
 # Route 4: Get the current authenticated user
 @auth_bp.route("/me", methods=["GET"])
 @login_required
@@ -150,9 +166,7 @@ def get_current_user() -> Tuple[Response, int]:
     """
     try:
         user = g.user
-        return jsonify({
-            "user": auth_service.user_service.user_to_dict(user)
-        }), 200
+        return jsonify({"user": auth_service.user_service.user_to_dict(user)}), 200
 
     except UserNotFoundError as e:
         return jsonify({"error": str(e)}), 404

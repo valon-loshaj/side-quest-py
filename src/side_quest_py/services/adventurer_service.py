@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
+from .. import db
 from ..models.adventurer import AdventurerValidationError, LevelCalculator
 from ..models.db_models import Adventurer, QuestCompletion
-from .. import db
 
 
 class AdventurerService:
@@ -12,17 +12,15 @@ class AdventurerService:
         """Initialize the adventurer service with a level calculator."""
         self.level_calculator = LevelCalculator()
 
-    def create_adventurer(
-        self, name: str, level: int = 1, experience: int = 0
-    ) -> Adventurer:
+    def create_adventurer(self, name: str, user_id: str, level: int = 1, experience: int = 0) -> Adventurer:
         """
         Create a new adventurer.
 
         Args:
             name: The name of the adventurer
+            user_id: The ID of the user associated with the adventurer
             level: The starting level of the adventurer (default: 1)
             experience: The starting experience of the adventurer (default: 0)
-
         Returns:
             Adventurer: The newly created adventurer
 
@@ -37,6 +35,8 @@ class AdventurerService:
                 raise AdventurerValidationError("Level cannot be less than 1")
             if experience < 0:
                 raise AdventurerValidationError("Experience cannot be negative")
+            if not user_id:
+                raise AdventurerValidationError("User ID cannot be empty")
 
             # Check if adventurer with the same name already exists
             existing = self.get_adventurer(name)
@@ -44,11 +44,7 @@ class AdventurerService:
                 raise AdventurerValidationError(f"Adventurer with name '{name}' already exists")
 
             # Create new adventurer
-            adventurer = Adventurer(
-                name=name,
-                level=level,
-                experience=experience
-            )
+            adventurer = Adventurer(name=name, level=level, experience=experience, user_id=user_id)
 
             # Add to database
             db.session.add(adventurer)
@@ -72,7 +68,7 @@ class AdventurerService:
         Returns:
             Optional[Adventurer]: The adventurer if found, None otherwise
         """
-        return Adventurer.query.filter_by(name=name).first() # type: ignore
+        return Adventurer.query.filter_by(name=name).first()
 
     def get_all_adventurers(self) -> List[Adventurer]:
         """
@@ -81,7 +77,7 @@ class AdventurerService:
         Returns:
             List[Adventurer]: A list of all adventurers
         """
-        return Adventurer.query.all() # type: ignore
+        return Adventurer.query.all()
 
     def delete_adventurer(self, name: str) -> bool:
         """
@@ -104,14 +100,14 @@ class AdventurerService:
                 raise AdventurerValidationError(f"Error deleting adventurer: {str(e)}") from e
         return False
 
-    def update_adventurer(self, name: str, **kwargs) -> Optional[Adventurer]:
+    def update_adventurer(self, name: str, **kwargs: Any) -> Optional[Adventurer]:
         """
         Update an adventurer's attributes.
-        
+
         Args:
             name: The name of the adventurer
             **kwargs: Attributes to update
-            
+
         Returns:
             Optional[Adventurer]: The updated adventurer if found, None otherwise
         """
@@ -152,14 +148,12 @@ class AdventurerService:
             return None
 
         try:
-            # Add experience
-            adventurer.experience += experience_gain # type: ignore
+            adventurer.experience += experience_gain
 
-            # Check for level up
-            required_exp = self.level_calculator.calculate_req_exp(adventurer.level) # type: ignore
+            required_exp = self.level_calculator.calculate_req_exp(adventurer.level)
             if adventurer.experience >= required_exp:
-                adventurer.level += 1 # type: ignore
-                adventurer.experience = 0 # type: ignore
+                adventurer.level += 1
+                adventurer.experience = 0
 
             db.session.commit()
             return adventurer
@@ -192,48 +186,31 @@ class AdventurerService:
             return None
 
         try:
-            # Check if this quest was already completed by this adventurer
-            completion = QuestCompletion.query.filter_by(
-                adventurer_id=adventurer.id,
-                quest_id=quest_id
-            ).first()
+            completion = QuestCompletion.query.filter_by(adventurer_id=adventurer.id, quest_id=quest_id).first()
 
             was_new = completion is None
 
             if was_new:
-                # Record completion in the database
-                new_completion = QuestCompletion(
-                    adventurer_id=adventurer.id,
-                    quest_id=quest_id
-                )
+                new_completion = QuestCompletion(adventurer_id=adventurer.id, quest_id=quest_id)
                 db.session.add(new_completion)
 
-                # Get current level before gaining experience
                 old_level = adventurer.level
 
-                # Gain experience
-                adventurer.experience += experience_gain # type: ignore
+                adventurer.experience += experience_gain
 
-                # Check for level up
-                required_exp = self.level_calculator.calculate_req_exp(old_level) # type: ignore
+                required_exp = self.level_calculator.calculate_req_exp(old_level)
                 leveled_up = False
 
                 if adventurer.experience >= required_exp:
-                    adventurer.level += 1 # type: ignore
-                    adventurer.experience = 0 # type: ignore
+                    adventurer.level += 1
+                    adventurer.experience = 0
                     leveled_up = True
 
                 db.session.commit()
 
-                return {
-                    "was_new_completion": True,
-                    "leveled_up": leveled_up
-                }
+                return {"was_new_completion": True, "leveled_up": leveled_up}
             else:
-                return {
-                    "was_new_completion": False,
-                    "leveled_up": False
-                }
+                return {"was_new_completion": False, "leveled_up": False}
 
         except (TypeError, ValueError) as e:
             db.session.rollback()
@@ -249,13 +226,12 @@ class AdventurerService:
         Returns:
             Dict[str, Any]: A dictionary representation of the adventurer
         """
-        # Get the experience required for next level
-        experience_for_next_level = self.level_calculator.calculate_req_exp(adventurer.level) # type: ignore
+        experience_for_next_level = self.level_calculator.calculate_req_exp(adventurer.level)
 
-        # Calculate progress percentage
-        progress_percentage = (adventurer.experience / experience_for_next_level * 100) if experience_for_next_level > 0 else 100
+        progress_percentage = (
+            (adventurer.experience / experience_for_next_level * 100) if experience_for_next_level > 0 else 100
+        )
 
-        # Get completed quests
         completed_quests = [
             completion.quest_id for completion in QuestCompletion.query.filter_by(adventurer_id=adventurer.id).all()
         ]

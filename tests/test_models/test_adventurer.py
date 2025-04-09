@@ -24,7 +24,7 @@ def adventurer() -> Adventurer:
     test_names = ["Aragorn", "Frodo", "Gandalf", "Scarlett", "Bob"]
     random_index = random.randrange(len(test_names))
     name = test_names[random_index]
-    return Adventurer(name)
+    return Adventurer(name=name, user_id="test_user_id")
 
 
 class TestAdventurer:
@@ -44,10 +44,10 @@ class TestAdventurer:
 
         # Act
         with pytest.raises(AdventurerValidationError) as exc_info:
-            _ = Adventurer(name)
+            _ = Adventurer(name=name, user_id="test_user_id")
 
         # Assert
-        assert str(exc_info.value) == "Adventurer must have a name"
+        assert "Adventurer name cannot be empty" in str(exc_info.value)
 
     def test_adventurer_creation_with_negative_level(self) -> None:
         """Test that creating an adventurer with negative level raises AdventurerValidationError"""
@@ -55,13 +55,11 @@ class TestAdventurer:
         name = "Test"
 
         # Act
-        with pytest.raises(AdventurerValidationError) as exc_info:
-            _ = Adventurer(name, _level=-1)
+        with pytest.raises(AdventurerLevelError) as exc_info:
+            _ = Adventurer(name=name, user_id="test_user_id", level=-1)
 
         # Assert
-        assert "Adventurer level cannot be a negative number or 0" in str(
-            exc_info.value
-        )
+        assert "Level must be a positive integer" in str(exc_info.value)
 
     def test_adventurer_creation_with_negative_experience(self) -> None:
         """Test that creating an adventurer with negative experience raises AdventurerValidationError"""
@@ -69,11 +67,11 @@ class TestAdventurer:
         name = "Test"
 
         # Act
-        with pytest.raises(AdventurerValidationError) as exc_info:
-            _ = Adventurer(name, experience=-10)
+        with pytest.raises(AdventurerExperienceError) as exc_info:
+            _ = Adventurer(name=name, user_id="test_user_id", experience=-10)
 
         # Assert
-        assert "Adventurer cannot have negative experience" in str(exc_info.value)
+        assert "Experience must be a non-negative integer" in str(exc_info.value)
 
     def test_gain_experience(self) -> None:
         """Test that a gain of experience is added to the adventurer's total exp"""
@@ -251,9 +249,7 @@ class TestLevelCalculator:
             calculator.has_leveled_up(-1, 100)
         assert "Level must be greater than 0" in str(exc_info.value)
 
-    def test_has_leveled_up_negative_experience(
-        self, calculator: LevelCalculator
-    ) -> None:
+    def test_has_leveled_up_negative_experience(self, calculator: LevelCalculator) -> None:
         """Test that has_leveled_up raises AdventurerExperienceError with negative experience"""
         # Arrange is handled by fixture
 

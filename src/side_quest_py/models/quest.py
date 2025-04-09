@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from ulid import ULID
 
@@ -6,14 +7,18 @@ from ulid import ULID
 class QuestValidationError(Exception):
     """Raised when a quest fails validation."""
 
+
 class QuestCompletionError(Exception):
     """Raised when there's an error completing a quest."""
+
 
 class QuestNotFoundError(Exception):
     """Raised when a quest is not found."""
 
+
 class QuestServiceError(Exception):
     """Raised when there's an error in the quest service."""
+
 
 @dataclass
 class Quest:
@@ -28,9 +33,12 @@ class Quest:
     """
 
     title: str
+    adventurer_id: str
     experience_reward: int = field(default=50)
     id: str = field(default_factory=lambda: str(ULID()))
     completed: bool = field(default=False)
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
 
     def __post_init__(self) -> None:
         """
@@ -41,12 +49,11 @@ class Quest:
         try:
             self._validate_title()
             self._validate_experience_reward()
+            self._validate_adventurer_id()
         except ValueError as e:
             raise QuestValidationError(f"Error validating quest: {str(e)}") from e
         except Exception as e:
-            raise QuestValidationError(
-                f"Unexpected error occurred when validating quest: {str(e)}"
-            ) from e
+            raise QuestValidationError(f"Unexpected error occurred when validating quest: {str(e)}") from e
 
     def _validate_title(self) -> None:
         """Validate the quest title."""
@@ -57,6 +64,11 @@ class Quest:
         """Validate the experience reward."""
         if self.experience_reward < 0:
             raise QuestValidationError("Experience reward cannot be negative")
+
+    def _validate_adventurer_id(self) -> None:
+        """Validate the adventurer ID."""
+        if not self.adventurer_id or not self.adventurer_id.strip():
+            raise QuestValidationError("Adventurer ID cannot be empty")
 
     def __str__(self) -> str:
         """
@@ -81,9 +93,7 @@ class Quest:
         except ValueError as e:
             raise QuestCompletionError(f"Error completing quest: {str(e)}") from e
         except Exception as e:
-            raise QuestCompletionError(
-                f"Unexpected error occurred when completing quest: {str(e)}"
-            ) from e
+            raise QuestCompletionError(f"Unexpected error occurred when completing quest: {str(e)}") from e
 
     @property
     def is_completed(self) -> bool:
