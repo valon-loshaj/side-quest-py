@@ -1,16 +1,19 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+
 from ulid import ULID
 
 
 class QuestCompletionError(Exception):
     """Raised when a quest completion fails validation."""
 
+
 @dataclass
 class QuestCompletion:
     """
     A quest completion is a record of a quest that has been completed by an adventurer.
     """
+
     adventurer_id: str
     quest_id: str
     id: str = field(default_factory=lambda: str(ULID()))
