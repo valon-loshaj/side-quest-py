@@ -4,9 +4,17 @@ from typing import Any, Dict, Optional
 
 class Config:
     """Base configuration."""
-
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Flask
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev")
+    
+    # SQLAlchemy
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Default database path is in instance folder
+    _INSTANCE_PATH = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "instance")
+    )
 
 
 class DevelopmentConfig(Config):
@@ -14,7 +22,8 @@ class DevelopmentConfig(Config):
 
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", "sqlite:///side_quest_dev.db"
+        "DATABASE_URL", 
+        f"sqlite:///{os.path.join(Config._INSTANCE_PATH, 'side_quest_dev.db')}"
     )
 
 
@@ -22,16 +31,30 @@ class TestingConfig(Config):
     """Testing configuration."""
 
     TESTING = True
+    # Use in-memory database for testing by default
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", "sqlite:///side_quest_test.db"
+        "TEST_DATABASE_URL", 
+        f"sqlite:///{os.path.join(Config._INSTANCE_PATH, 'side_quest_test.db')}"
     )
+    
+    # Disable CSRF protection in testing
+    WTF_CSRF_ENABLED = False
 
 
 class ProductionConfig(Config):
     """Production configuration."""
-
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///side_quest.db")
-    SECRET_KEY = os.environ.get("SECRET_KEY", "production_default_key")
+    
+    # Production database can be set via environment variable
+    # Default to SQLite but consider PostgreSQL or MySQL for production
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL", 
+        f"sqlite:///{os.path.join(Config._INSTANCE_PATH, 'side_quest.db')}"
+    )
+    
+    # Production should use a strong secret key
+    SECRET_KEY = os.environ.get("SECRET_KEY") # type: ignore
+    if not SECRET_KEY: # type: ignore
+        raise ValueError("Production environment must set SECRET_KEY environment variable")
 
 
 config: Dict[str, Any] = {
