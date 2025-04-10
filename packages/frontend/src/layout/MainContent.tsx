@@ -6,7 +6,7 @@ interface MainContentProps {
 }
 
 const MainContent: React.FC<MainContentProps> = ({ children }) => {
-    return <div className={styles.main}>{children}</div>;
+    return <main className={styles.main}>{children}</main>;
 };
 
 export default MainContent;
