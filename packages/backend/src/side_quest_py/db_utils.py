@@ -140,7 +140,7 @@ def get_db_status(app: Optional[Flask] = None) -> dict:
     try:
         db.session.execute(text("SELECT 1"))
         status = "connected"
-    except Exception as e:
+    except (SQLAlchemyError) as e:
         status = f"error: {str(e)}"
 
     return {"status": status, "uri": uri, "track_modifications": track_modifications, "env": env}

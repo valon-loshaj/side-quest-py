@@ -1,0 +1,99 @@
+[MASTER]
+# Python code to execute, usually for sys.path manipulation
+init-hook='''
+import sys
+from pathlib import Path
+# Add project root to path
+sys.path.append(str(Path(__file__).parent))
+# Add src directory to path
+sys.path.append(str(Path(__file__).parent / "src"))
+'''
+
+# Add files or directories to the blacklist
+ignore=.git,__pycache__,venv,.venv,build,dist,*.egg-info
+
+# Pickle collected data for later comparisons
+persistent=yes
+
+# List of plugins
+load-plugins=
+
+# Use multiple processes to speed up the analysis
+jobs=4
+
+# Allow loading of arbitrary C extensions
+unsafe-load-any-extension=no
+
+[MESSAGES CONTROL]
+# Disable specific messages
+disable=
+    missing-module-docstring,
+    missing-function-docstring,
+    missing-class-docstring,
+    import-error,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-instance-attributes,
+    too-many-locals,
+    logging-fstring-interpolation,
+    no-member,
+    invalid-name,
+    unused-import
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+# Maximum number of lines in a module
+max-module-lines=1000
+
+# String used as indentation unit
+indent-string='    '
+
+[BASIC]
+# List of builtins function names that shouldn't be used
+bad-functions=map,filter,input
+
+# Good variable names
+good-names=i,j,k,ex,Run,_,id,db,app,bp,e,f,env
+
+[VARIABLES]
+# A regular expression matching names of dummy variables
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+
+[TYPECHECK]
+# List of members which are set dynamically and shouldn't trigger E1101
+generated-members=REQUEST,acl_users,aq_parent,request,query,session,db,objects
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=10
+# Maximum number of locals for function / method
+max-locals=25
+# Maximum number of return / yield for function / method
+max-returns=10
+# Maximum number of statements in function / method
+max-statements=100
+# Maximum number of parents for a class
+max-parents=7
+# Maximum number of attributes for a class
+max-attributes=15
+# Maximum number of public methods for a class
+max-public-methods=20
+
+[IMPORTS]
+# Allow wildcard imports from modules
+allow-wildcard-with-all=no
+
+# Force import order to recognize a module as being part of a third party library
+known-third-party=
+
+[CLASSES]
+# List of method names used to declare (i.e. assign) instance attributes
+defining-attr-methods=__init__,__new__,setUp
+
+# List of valid names for the first argument in a class method
+valid-classmethod-first-arg=cls
+
+# List of valid names for the first argument in a metaclass class method
+valid-metaclass-classmethod-first-arg=cls 

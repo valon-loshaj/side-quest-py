@@ -1,6 +1,6 @@
 import pytest
 
-from src.side_quest_py import create_app, db
+from packages.backend.src.side_quest_py import create_app, db
 
 
 @pytest.fixture
