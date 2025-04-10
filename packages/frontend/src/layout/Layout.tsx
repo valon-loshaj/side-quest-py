@@ -4,7 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
-
+import MainContent from './MainContent';
 interface LayoutProps {
     children: ReactNode;
 }
@@ -14,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className={styles.container}>
             <Header />
             <LeftSidebar />
-            <main className={styles.main}>{children}</main>
+            <MainContent>{children}</MainContent>
             <RightSidebar />
             <Footer />
         </div>
