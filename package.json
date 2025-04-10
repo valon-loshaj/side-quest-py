@@ -1,0 +1,24 @@
+{
+    "name": "side-quest-py",
+    "version": "0.0.0",
+    "private": true,
+    "workspaces": [
+      "packages/frontend",
+      "packages/shared"
+    ],
+    "scripts": {
+      "dev:frontend": "pnpm --filter frontend dev",
+      "build:frontend": "pnpm --filter frontend build",
+      "dev:backend": "cd packages/backend && python -m flask --app src.side_quest_py run --debug",
+      "start": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+      "lint": "pnpm --filter frontend lint",
+      "test": "pnpm --filter frontend test"
+    },
+    "devDependencies": {
+      "concurrently": "^8.2.2"
+    },
+    "engines": {
+      "node": ">=18.0.0",
+      "pnpm": ">=8.0.0"
+    }
+  }

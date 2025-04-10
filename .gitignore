@@ -89,3 +89,15 @@ docker-data/
 # Temporary files
 tmp/
 temp/
+
+# Node
+node_modules/
+dist/
+.npm
+.pnpm-store/
+coverage/
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

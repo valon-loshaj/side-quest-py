@@ -1,3 +1,9 @@
+"""Side Quest Py - A Flask-based adventure game backend.
+
+This module serves as the main entry point for the Side Quest Py application.
+It initializes the Flask application, configures extensions, and sets up routes.
+"""
+
 import os
 from typing import Optional, Union
 
@@ -33,7 +39,7 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     env = os.environ.get("FLASK_ENV", "development")
 
     # Import config classes and apply environment-specific config
-    from .config import config as config_dict
+    from src.side_quest_py.config import config as config_dict  # noqa: E402
 
     app.config.from_object(config_dict[env])
 
@@ -52,10 +58,10 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     register_cli_commands(app)
 
     # Import blueprints
-    from .routes.adventurer_routes import adventurer_bp
-    from .routes.auth_routes import auth_bp
-    from .routes.quest_routes import quest_bp
-    from .routes.user_routes import user_bp
+    from src.side_quest_py.routes.adventurer_routes import adventurer_bp  # noqa: E402
+    from src.side_quest_py.routes.auth_routes import auth_bp  # noqa: E402
+    from src.side_quest_py.routes.quest_routes import quest_bp  # noqa: E402
+    from src.side_quest_py.routes.user_routes import user_bp  # noqa: E402
 
     # Register blueprints
     app.register_blueprint(adventurer_bp, url_prefix="/api/v1")
@@ -71,7 +77,7 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     # Add health check endpoint
     @app.route("/health")
     def health_check():
-        from .db_utils import get_db_status
+        from src.side_quest_py.db_utils import get_db_status  # noqa: E402
 
         status = get_db_status()
         return {
@@ -95,7 +101,7 @@ def register_cli_commands(app: Flask) -> None:
         """Create database tables without dropping existing data."""
         print("Initializing the database...")
         print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        from .db_utils import init_db
+        from src.side_quest_py.db_utils import init_db  # noqa: E402
 
         init_db(app)
         print("Database initialized successfully")
@@ -105,7 +111,7 @@ def register_cli_commands(app: Flask) -> None:
         """Clear existing data and create new tables."""
         print("Resetting the database...")
         print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        from .db_utils import reset_db
+        from src.side_quest_py.db_utils import reset_db  # noqa: E402
 
         reset_db(app)
         print("Database reset successfully")
@@ -116,7 +122,7 @@ def register_cli_commands(app: Flask) -> None:
         print("Seeding the database...")
         print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
         try:
-            from .db_utils import seed_db
+            from src.side_quest_py.db_utils import seed_db  # noqa: E402
 
             seed_db(app)
             print("Database seeded successfully")
@@ -127,7 +133,7 @@ def register_cli_commands(app: Flask) -> None:
     @app.cli.command("db-status")
     def db_status_command():
         """Show database connection status."""
-        from .db_utils import get_db_status
+        from src.side_quest_py.db_utils import get_db_status  # noqa: E402
 
         status = get_db_status(app)
 

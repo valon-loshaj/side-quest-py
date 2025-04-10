@@ -17,7 +17,28 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Environment Configuration
+### 3. Configure Python Path (Optional)
+
+For correct module imports, set up the PYTHONPATH using the provided script:
+
+```bash
+# One-time setup to make script executable
+chmod +x setup_pythonpath.sh
+
+# Set up PYTHONPATH in your current terminal session
+source setup_pythonpath.sh
+```
+
+This is particularly useful for running Python scripts from the terminal outside your editor.
+
+You can also run commands directly with the correct PYTHONPATH:
+
+```bash
+# Example: Run a Python script with the correct PYTHONPATH
+./setup_pythonpath.sh python your_script.py
+```
+
+### 4. Environment Configuration
 
 Create a `.env` file based on the `.env.example` template:
 
@@ -39,7 +60,7 @@ The application uses different database configurations based on the environment:
 - **Testing**: `sqlite:///instance/side_quest_test.db`
 - **Production**: Set `DATABASE_URL` to a production database (PostgreSQL recommended)
 
-### 4. Initialize the database
+### 5. Initialize the database
 
 ```bash
 # Create database tables
@@ -54,13 +75,13 @@ To reset the database (drop all tables and recreate them):
 flask --app src.side_quest_py reset-db
 ```
 
-### 5. Run the development server
+### 6. Run the development server
 
 ```bash
 flask --app src.side_quest_py run --debug
 ```
 
-### 6. Verify the application is running
+### 7. Verify the application is running
 
 Visit http://127.0.0.1:5000/hello in your browser. You should see "Hello, Side Quest!"
 

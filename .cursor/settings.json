@@ -6,22 +6,37 @@
     "python.formatting.blackArgs": ["--line-length", "88"],
     "editor.formatOnSave": true,
     "python.linting.pylintPath": "pylint",
+    "python.linting.pylintArgs": [
+        "--rcfile=${workspaceFolder}/packages/backend/.pylintrc"
+    ],
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Path": "flake8",
-    "python.linting.flake8Args": ["--max-line-length=88", "--extend-ignore=E203"],
+    "python.linting.flake8Args": ["--max-line-length=120", "--extend-ignore=E203"],
     "python.linting.mypyEnabled": true,
     "python.linting.mypyPath": "mypy",
+    "python.linting.mypyArgs": [
+        "--config-file=${workspaceFolder}/packages/backend/mypy.ini"
+    ],
     "editor.codeActionsOnSave": {
         "source.organizeImports": true
     },
     "isort.args": ["--profile", "black"],
     "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.extraPaths": ["${workspaceFolder}/src"],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/packages/backend",
+        "${workspaceFolder}/packages/backend/src"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/packages/backend",
+        "${workspaceFolder}/packages/backend/src"
+    ],
     "python.analysis.autoImportCompletions": true,
     "python.analysis.completeFunctionParens": true,
     "python.analysis.inlayHints.functionReturnTypes": true,
     "python.analysis.inlayHints.variableTypes": true,
-    "editor.rulers": [88],
+    "editor.rulers": [120],
     "editor.bracketPairColorization.enabled": true,
     "editor.guides.bracketPairs": true,
     "editor.suggestSelection": "first",
@@ -29,6 +44,11 @@
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestArgs": [
-        "tests"
-    ]
+        "packages/backend/tests"
+    ],
+    "python.defaultInterpreterPath": "${workspaceFolder}/packages/backend/venv/bin/python",
+    "python.envFile": "${workspaceFolder}/packages/backend/.env.dev",
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/packages/backend:${workspaceFolder}/packages/backend/src:${env:PYTHONPATH}"
+    }
 }

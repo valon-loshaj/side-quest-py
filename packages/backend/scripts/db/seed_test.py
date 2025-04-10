@@ -1,8 +1,8 @@
 import os
 import sys
 
-from src.side_quest_py import create_app
-from src.side_quest_py.db_utils import reset_db, seed_db
+from packages.backend.src.side_quest_py import create_app
+from packages.backend.src.side_quest_py.db_utils import reset_db, seed_db
 
 # Add the root directory to the path to import the app module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
