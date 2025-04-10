@@ -145,4 +145,4 @@ def register_cli_commands(app: Flask) -> None:
 
 
 # Create a default application instance for Flask CLI commands
-app = create_app()
+default_app = create_app()

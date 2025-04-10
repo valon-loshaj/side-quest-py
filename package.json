@@ -9,7 +9,7 @@
     "scripts": {
       "dev:frontend": "pnpm --filter frontend dev",
       "build:frontend": "pnpm --filter frontend build",
-      "dev:backend": "cd packages/backend && python -m flask --app src.side_quest_py run --debug",
+      "dev:backend": "cd packages/backend && source venv/bin/activate && python -m flask --app src.side_quest_py run --debug",
       "start": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
       "lint": "pnpm --filter frontend lint",
       "test": "pnpm --filter frontend test"
