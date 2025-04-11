@@ -2,6 +2,8 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/hooks/useAuth';
 import { UserLoginRequest } from '../types/api';
+import { ROUTES, RouteNames } from '../types/routes';
+import styles from '../styles/Login.module.css';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -21,17 +23,17 @@ const Login = () => {
         const result = await loginUser(credentials);
 
         if (result.meta.requestStatus === 'fulfilled') {
-            navigate('/dashboard');
+            navigate(ROUTES[RouteNames.DASHBOARD].path);
         }
     };
 
     return (
-        <div className="login-container">
+        <div className={styles.loginContainer}>
             <h2>Login</h2>
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className={styles.errorMessage}>{error}</div>}
 
             <form onSubmit={handleSubmit}>
-                <div className="form-group">
+                <div className={styles.formGroup}>
                     <label htmlFor="username">Username</label>
                     <input
                         type="text"
@@ -42,7 +44,7 @@ const Login = () => {
                     />
                 </div>
 
-                <div className="form-group">
+                <div className={styles.formGroup}>
                     <label htmlFor="password">Password</label>
                     <input
                         type="password"
@@ -53,7 +55,7 @@ const Login = () => {
                     />
                 </div>
 
-                <button type="submit" disabled={loading} className="login-button">
+                <button type="submit" disabled={loading} className={styles.loginButton}>
                     {loading ? 'Logging in...' : 'Login'}
                 </button>
             </form>

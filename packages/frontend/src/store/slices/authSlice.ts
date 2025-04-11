@@ -8,6 +8,7 @@ import {
     UserRegistrationRequest,
     UserRegistrationResponse,
 } from '../../types/api';
+import { store } from '..';
 
 interface AuthState {
     user: User | null;
@@ -86,6 +87,26 @@ export const getCurrentUser = createAsyncThunk(
                 error instanceof Error ? error.message : 'Failed to fetch user data';
             return rejectWithValue(errorMessage);
         }
+    }
+);
+
+export const checkAuthStatus = createAsyncThunk(
+    'auth/checkStatus',
+    async (_, { rejectWithValue }) => {
+        const token = tokenService.getToken();
+        if (token && tokenService.isTokenValid()) {
+            try {
+                return await store.dispatch(getCurrentUser()).unwrap();
+            } catch (error: unknown) {
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to check auth status';
+                tokenService.removeToken();
+                return rejectWithValue(errorMessage);
+            }
+        }
+        return null;
     }
 );
 

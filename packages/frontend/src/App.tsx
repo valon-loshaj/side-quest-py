@@ -1,26 +1,74 @@
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAppSelector } from './store';
 import Layout from './layout/Layout';
-import Login from './components/Login';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import { ROUTES, RouteNames } from './types/routes';
+import './App.css';
 
 function App() {
+    const { isAuthenticated } = useAppSelector(state => state.auth);
+
     return (
-        <Layout>
-            <h1>Side Quest Application</h1>
-            <p>
-                Welcome to the Side Quest Application built with React and TypeScript.
-            </p>
-            <Login />
-            <div>
-                <a href="https://vite.dev" target="_blank">
-                    <img src={viteLogo} className="logo" alt="Vite logo" />
-                </a>
-                <a href="https://react.dev" target="_blank">
-                    <img src={reactLogo} className="logo react" alt="React logo" />
-                </a>
-            </div>
-        </Layout>
+        <BrowserRouter>
+            <Routes>
+                {/* Root route - redirects based on auth status */}
+                <Route
+                    path="/"
+                    element={
+                        <Navigate
+                            to={
+                                isAuthenticated
+                                    ? ROUTES[RouteNames.DASHBOARD].path
+                                    : ROUTES[RouteNames.LOGIN].path
+                            }
+                        />
+                    }
+                />
+
+                {/* Login route - redirects to dashboard if already authenticated */}
+                <Route
+                    path={ROUTES[RouteNames.LOGIN].path}
+                    element={
+                        isAuthenticated ? (
+                            <Navigate to={ROUTES[RouteNames.DASHBOARD].path} />
+                        ) : (
+                            <Layout>
+                                <Login />
+                            </Layout>
+                        )
+                    }
+                />
+
+                {/* Protected routes - wrapped with ProtectedRoute component */}
+                <Route element={<ProtectedRoute />}>
+                    <Route
+                        path={ROUTES[RouteNames.DASHBOARD].path}
+                        element={
+                            <Layout>
+                                <Dashboard />
+                            </Layout>
+                        }
+                    />
+                    {/* Add more protected routes here as needed */}
+                </Route>
+
+                {/* Catch-all route for unknown paths */}
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to={
+                                isAuthenticated
+                                    ? ROUTES[RouteNames.DASHBOARD].path
+                                    : ROUTES[RouteNames.LOGIN].path
+                            }
+                        />
+                    }
+                />
+            </Routes>
+        </BrowserRouter>
     );
 }
 

@@ -1,0 +1,19 @@
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 2rem;
+}
+
+.welcomeMessage {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: var(--color-primary);
+}
+
+.dashboardContent {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+}
