@@ -6,6 +6,7 @@ interface UserRegistrationRequest {
     username: string;
     email: string;
     password: string;
+    [key: string]: unknown;
 }
 
 interface UserRegistrationResponse {
@@ -14,8 +15,9 @@ interface UserRegistrationResponse {
 }
 
 interface UserLoginRequest {
-    email: string;
+    username: string;
     password: string;
+    [key: string]: unknown;
 }
 
 interface UserLoginResponse {

@@ -15,7 +15,7 @@ importers:
   packages/frontend:
     dependencies:
       '@reduxjs/toolkit':
-        specifier: ^2.1.0
+        specifier: ^2.6.1
         version: 2.6.1(react-redux@9.2.0(@types/react@19.1.0)(react@19.1.0)(redux@5.0.1))(react@19.1.0)
       jwt-decode:
         specifier: ^4.0.0
@@ -27,7 +27,7 @@ importers:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
       react-redux:
-        specifier: ^9.1.0
+        specifier: ^9.2.0
         version: 9.2.0(@types/react@19.1.0)(react@19.1.0)(redux@5.0.1)
       react-router-dom:
         specifier: ^6.22.0
