@@ -86,7 +86,7 @@ class AuthService:
             user = self.user_service.authenticate_user(username, password)
 
             # Return the user and their token
-            if not user.auth_token:
+            if not user.auth_token:  # type: ignore
                 raise AuthenticationError("Failed to generate auth token")
 
             return user, user.auth_token  # type: ignore
@@ -130,5 +130,5 @@ class AuthService:
     def _is_token_valid(self, user: User) -> bool:
         """Check if the user's token is valid and not expired."""
         return bool(
-            user.auth_token is not None and user.token_expiry is not None and user.token_expiry > datetime.now()
+            user.auth_token is not None and user.token_expiry is not None and user.token_expiry > datetime.now()  # type: ignore
         )

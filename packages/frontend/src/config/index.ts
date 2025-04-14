@@ -7,7 +7,7 @@ interface EnvironmentConfig {
 const ENV = import.meta.env.VITE_APP_ENV || 'development';
 const configs: Record<string, EnvironmentConfig> = {
     development: {
-        apiUrl: 'http://127.0.0.1:5000/api/v1',
+        apiUrl: '', // Empty for relative URLs that work with the proxy
         environment: 'development',
         apiVersion: 'v1',
     },
@@ -25,4 +25,4 @@ const configs: Record<string, EnvironmentConfig> = {
 
 export const config = configs[ENV] || configs.development;
 
-export const API_BASE_URL = `${config.apiUrl}/api/${config.apiVersion}`;
+export const API_BASE_URL = `/api/${config.apiVersion}`;

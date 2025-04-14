@@ -71,8 +71,17 @@ def register() -> Tuple[Response, int]:
 
         user = auth_service.register_user(username=username, email=email, password=password)
 
+        # Generate an auth token for the newly registered user
+        _, token = auth_service.authenticate(username=username, password=password)
+
         return (
-            jsonify({"message": "User registered successfully", "user": auth_service.user_service.user_to_dict(user)}),
+            jsonify(
+                {
+                    "message": "User registered successfully",
+                    "user": auth_service.user_service.user_to_dict(user),
+                    "auth_token": token,
+                }
+            ),
             201,
         )
 

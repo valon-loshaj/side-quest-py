@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import bcrypt
+from ulid import ULID
 
 from .. import db
 from ..models.adventurer import AdventurerNotFoundError
@@ -15,14 +16,14 @@ from ..services.adventurer_service import AdventurerService
 class UserService:
     """Service for handling user-related operations."""
 
-    def create_user(self, username: str, email: str, password: Optional[str] = None) -> User:
+    def create_user(self, username: str, email: str, password: str) -> User:
         """
         Create a new user.
 
         Args:
             username: The username of the user
             email: The email of the user
-            password: Optional password (will be hashed if provided)
+            password: The password of the user
         """
         try:
             # Check if user with the same username already exists
@@ -35,12 +36,18 @@ class UserService:
             if existing_email:
                 raise UserValidationError(f"User with email '{email}' already exists")
 
-            # Create new user
-            user = User(username=username, email=email, created_at=datetime.now(), updated_at=datetime.now())
+            # Generate a ULID for the user ID
+            user_id = str(ULID())
 
-            # Hash the password if provided
-            if password:
-                user.password_hash = self._hash_password(password)  # type: ignore
+            # Create new user
+            user = User(
+                id=user_id,
+                username=username,
+                email=email,
+                password_hash=self._hash_password(password),
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            )
 
             # Add to database
             db.session.add(user)
@@ -305,15 +312,17 @@ class UserService:
             "username": user.username,
             "email": user.email,
             "adventurers": [adventurer.name for adventurer in adventurers],
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-            "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+            "created_at": user.created_at.isoformat() if hasattr(user.created_at, "isoformat") else None,
+            "updated_at": user.updated_at.isoformat() if hasattr(user.updated_at, "isoformat") else None,
         }
 
         # Include auth token and expiry if they exist
-        if user.auth_token:
+        if user.auth_token is not None:
             user_dict["auth_token"] = user.auth_token
-            if user.token_expiry:
-                user_dict["token_expiry"] = user.token_expiry.isoformat()
+            if user.token_expiry is not None:
+                user_dict["token_expiry"] = (
+                    user.token_expiry.isoformat() if hasattr(user.token_expiry, "isoformat") else None
+                )
 
         return user_dict
 

@@ -8,6 +8,7 @@ import {
     UserRegistrationRequest,
     UserRegistrationResponse,
 } from '../../types/api';
+import { store } from '..';
 
 interface AuthState {
     user: User | null;
@@ -28,10 +29,16 @@ export const login = createAsyncThunk<UserLoginResponse, UserLoginRequest>(
     async (credentials, { rejectWithValue }) => {
         try {
             const response = await apiClient.post<UserLoginResponse>(
-                '/auth/login',
+                '/api/v1/auth/login',
                 credentials
             );
-            tokenService.setToken(response.data.token);
+
+            if (response.data.auth_token) {
+                tokenService.setToken(response.data.auth_token);
+            } else {
+                console.error('No auth_token found in login response:', response.data);
+            }
+
             return response.data;
         } catch (error: unknown) {
             const errorMessage =
@@ -47,10 +54,19 @@ export const register = createAsyncThunk<
 >('auth/register', async (userData, { rejectWithValue }) => {
     try {
         const response = await apiClient.post<UserRegistrationResponse>(
-            '/auth/register',
+            '/api/v1/auth/register',
             userData
         );
-        tokenService.setToken(response.data.token);
+
+        if (response.data.auth_token) {
+            tokenService.setToken(response.data.auth_token);
+        } else {
+            console.error(
+                'No auth_token found in registration response:',
+                response.data
+            );
+        }
+
         return response.data;
     } catch (error: unknown) {
         const errorMessage =
@@ -63,7 +79,12 @@ export const logout = createAsyncThunk(
     'auth/logout',
     async (_, { rejectWithValue }) => {
         try {
-            await apiClient.post('/auth/logout');
+            const token = tokenService.getToken();
+
+            await apiClient.post('/api/v1/auth/logout', undefined, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+
             tokenService.removeToken();
             return null;
         } catch (error: unknown) {
@@ -79,13 +100,33 @@ export const getCurrentUser = createAsyncThunk(
     'auth/getCurrentUser',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await apiClient.get<{ user: User }>('/auth/me');
+            const response = await apiClient.get<{ user: User }>('/api/v1/auth/me');
             return response.data.user;
         } catch (error: unknown) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to fetch user data';
             return rejectWithValue(errorMessage);
         }
+    }
+);
+
+export const checkAuthStatus = createAsyncThunk(
+    'auth/checkStatus',
+    async (_, { rejectWithValue }) => {
+        const token = tokenService.getToken();
+        if (token && tokenService.isTokenValid()) {
+            try {
+                return await store.dispatch(getCurrentUser()).unwrap();
+            } catch (error: unknown) {
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to check auth status';
+                tokenService.removeToken();
+                return rejectWithValue(errorMessage);
+            }
+        }
+        return null;
     }
 );
 
