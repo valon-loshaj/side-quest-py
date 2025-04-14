@@ -4,8 +4,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 
-from ulid import ULID
-
 from .adventurer import Adventurer
 
 
@@ -33,7 +31,7 @@ class User:
     Attributes:
         username: The username of the user
         email: The email of the user
-        id: The unique identifier for the user
+        id: The unique identifier for the user (set in service layer)
         created_at: The date and time the user was created
         updated_at: The date and time the user was last updated
         adventurers: Dictionary of adventurers associated with the user, keyed by adventurer ID
@@ -41,7 +39,7 @@ class User:
 
     username: str
     email: str
-    id: str = field(default_factory=lambda: str(ULID()))
+    id: str
     password_hash: Optional[str] = None
     auth_token: Optional[str] = None
     token_expiry: Optional[datetime] = None
