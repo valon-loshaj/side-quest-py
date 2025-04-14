@@ -5,6 +5,7 @@ import Footer from './Footer';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
 import MainContent from './MainContent';
+
 interface LayoutProps {
     children: ReactNode;
 }

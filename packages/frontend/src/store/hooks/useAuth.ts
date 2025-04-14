@@ -5,9 +5,14 @@ import {
     logout,
     register,
     getCurrentUser,
+    updateUser,
     clearError,
 } from '../slices/authSlice';
-import { UserLoginRequest, UserRegistrationRequest } from '../../types/api';
+import {
+    UserLoginRequest,
+    UserRegistrationRequest,
+    UserUpdateRequest,
+} from '../../types/api';
 
 export const useAuth = () => {
     const dispatch = useAppDispatch();
@@ -37,6 +42,13 @@ export const useAuth = () => {
         return dispatch(getCurrentUser());
     }, [dispatch]);
 
+    const updateUserProfile = useCallback(
+        (userId: string, userData: UserUpdateRequest) => {
+            return dispatch(updateUser({ userId, userData }));
+        },
+        [dispatch]
+    );
+
     const clearAuthError = useCallback(() => {
         dispatch(clearError());
     }, [dispatch]);
@@ -50,6 +62,7 @@ export const useAuth = () => {
         registerUser,
         logoutUser,
         fetchCurrentUser,
+        updateUserProfile,
         clearAuthError,
     };
 };

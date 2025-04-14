@@ -26,13 +26,16 @@ def create_user() -> Tuple[Response, int]:
 
         username = data.get("username")
         email = data.get("email")
+        password = data.get("password")
 
         if not username:
             return jsonify({"error": "Username is required"}), 400
         if not email:
             return jsonify({"error": "Email is required"}), 400
+        if not password:
+            return jsonify({"error": "Password is required"}), 400
 
-        user = user_service.create_user(username=username, email=email)
+        user = user_service.create_user(username=username, email=email, password=password)
 
         return jsonify({"message": "User created successfully", "user": user_service.user_to_dict(user)}), 201
 
@@ -104,11 +107,12 @@ def update_user(user_id: str) -> Tuple[Response, int]:
 
         username = data.get("username")
         email = data.get("email")
+        password = data.get("password")
 
-        if not username and not email:
+        if not username and not email and not password:
             return jsonify({"error": "No valid fields to update"}), 400
 
-        user = user_service.update_user(user_id, username=username, email=email)
+        user = user_service.update_user(user_id, username=username, email=email, password=password)
 
         return jsonify({"message": "User updated successfully", "user": user_service.user_to_dict(user)}), 200
 

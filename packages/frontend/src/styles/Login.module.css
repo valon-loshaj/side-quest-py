@@ -1,5 +1,11 @@
 .loginContainer {
     width: 100%;
+    text-align: center;
+}
+
+.loginContainer h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
 }
 
 .errorMessage {
@@ -12,12 +18,14 @@
 
 .formGroup {
     margin-bottom: 1.5rem;
+    text-align: left;
 }
 
 .formGroup label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
+    text-align: left;
 }
 
 .formGroup input {
