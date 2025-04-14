@@ -105,7 +105,9 @@ class UserService:
         users: List[User] = User.query.all()
         return users
 
-    def update_user(self, user_id: str, username: Optional[str] = None, email: Optional[str] = None) -> User:
+    def update_user(
+        self, user_id: str, username: Optional[str] = None, email: Optional[str] = None, password: Optional[str] = None
+    ) -> User:
         """
         Update a user's information.
 
@@ -113,6 +115,7 @@ class UserService:
             user_id: The string ID of the user
             username: The new username for the user
             email: The new email for the user
+            password: The new password for the user
         """
         try:
             user = self.get_user(user_id)
@@ -132,6 +135,10 @@ class UserService:
                 if existing and existing.id != user_id:
                     raise UserValidationError(f"Email '{email}' is already in use")
                 user.email = email  # type: ignore
+
+            # Update password if provided
+            if password:
+                user.password_hash = self._hash_password(password)  # type: ignore
 
             # Update timestamp
             user.updated_at = datetime.now()  # type: ignore

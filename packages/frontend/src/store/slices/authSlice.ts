@@ -7,6 +7,7 @@ import {
     UserLoginResponse,
     UserRegistrationRequest,
     UserRegistrationResponse,
+    UserUpdateRequest,
 } from '../../types/api';
 import { store } from '..';
 
@@ -130,6 +131,24 @@ export const checkAuthStatus = createAsyncThunk(
     }
 );
 
+export const updateUser = createAsyncThunk<
+    User,
+    { userId: string; userData: UserUpdateRequest }
+>('auth/updateUser', async ({ userId, userData }, { rejectWithValue }) => {
+    try {
+        const response = await apiClient.put<{ user: User }>(
+            `/api/v1/user/${userId}`,
+            userData
+        );
+
+        return response.data.user;
+    } catch (error: unknown) {
+        const errorMessage =
+            error instanceof Error ? error.message : 'Failed to update user data';
+        return rejectWithValue(errorMessage);
+    }
+});
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -185,6 +204,19 @@ const authSlice = createSlice({
             state.user = null;
             state.isAuthenticated = false;
             tokenService.removeToken();
+        });
+
+        builder.addCase(updateUser.pending, state => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(updateUser.fulfilled, (state, action) => {
+            state.loading = false;
+            state.user = action.payload;
+        });
+        builder.addCase(updateUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
         });
     },
 });

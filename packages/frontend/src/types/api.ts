@@ -49,6 +49,12 @@ interface RequestOptions {
     contentType?: 'json' | 'multipart' | 'text';
 }
 
+export interface UserUpdateRequest {
+    username?: string;
+    email?: string;
+    password?: string;
+}
+
 export type {
     UserRegistrationRequest,
     UserRegistrationResponse,

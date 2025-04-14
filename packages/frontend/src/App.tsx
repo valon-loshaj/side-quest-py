@@ -3,6 +3,7 @@ import { useAppSelector } from './store';
 import Layout from './layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import UserManagement from './pages/UserManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ROUTES, RouteNames } from './types/routes';
 import './App.css';
@@ -48,6 +49,14 @@ function App() {
                         element={
                             <Layout>
                                 <Dashboard />
+                            </Layout>
+                        }
+                    />
+                    <Route
+                        path={ROUTES[RouteNames.USER_MANAGEMENT].path}
+                        element={
+                            <Layout>
+                                <UserManagement />
                             </Layout>
                         }
                     />

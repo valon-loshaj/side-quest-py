@@ -1,0 +1,44 @@
+.currentUser {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.profilePicture {
+    margin-right: 0.75rem;
+}
+
+.avatarPlaceholder {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: #4c8bf5;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.manageLink {
+    color: #4c8bf5;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.manageLink:hover {
+    text-decoration: underline;
+}
