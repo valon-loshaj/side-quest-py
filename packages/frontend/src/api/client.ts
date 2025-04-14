@@ -1,5 +1,6 @@
 import { config } from '../config';
 import { APIError, ApiResponse, RequestOptions } from '../types/api';
+import * as tokenService from '../services/token-service';
 
 const DEFAULT_OPTIONS: Partial<RequestOptions> = {
     timeout: 30000, // 30 seconds
@@ -26,7 +27,7 @@ export class ApiClient {
 
     constructor(
         baseUrl = config.apiUrl,
-        tokenProvider = () => localStorage.getItem('token'),
+        tokenProvider = tokenService.getToken,
         defaultHeaders: Record<string, string> = {},
         cacheEnabled = true
     ) {
@@ -48,9 +49,18 @@ export class ApiClient {
         endpoint: string,
         params?: Record<string, string | number | boolean | undefined>
     ): string {
-        const url = new URL(
-            `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
-        );
+        // If baseUrl is empty, use relative URL
+        let url: URL;
+        if (this.baseUrl) {
+            url = new URL(
+                `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
+            );
+        } else {
+            // Use relative URL with the current origin for the proxy
+            url = new URL(
+                `${window.location.origin}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
+            );
+        }
 
         if (params) {
             Object.entries(params).forEach(([key, value]) => {
@@ -58,6 +68,11 @@ export class ApiClient {
                     url.searchParams.append(key, String(value));
                 }
             });
+        }
+
+        // For relative URLs with proxy, return path + query string only
+        if (!this.baseUrl) {
+            return `${url.pathname}${url.search}`;
         }
 
         return url.toString();
@@ -167,6 +182,12 @@ export class ApiClient {
             errorData = { message: 'Unknown error occurred', code: 'UNKNOWN_ERROR' };
         }
 
+        console.error('API Error:', {
+            status: response.status,
+            url: response.url,
+            errorData,
+        });
+
         const apiError: APIError = {
             message:
                 (errorData.message as string) ||
@@ -185,6 +206,16 @@ export class ApiClient {
         const url = this.buildUrl(endpoint, mergedOptions.params);
         const headers = this.prepareHeaders(mergedOptions);
         const body = this.prepareBody(mergedOptions);
+
+        // Log the request details in development
+        if (import.meta.env.MODE !== 'production') {
+            console.log('API Request:', {
+                url,
+                method: mergedOptions.method,
+                headers: { ...headers },
+                body: mergedOptions.body ? { ...mergedOptions.body } : null,
+            });
+        }
 
         const cacheKey = this.getCacheKey(url, mergedOptions);
         if (mergedOptions.method === 'GET') {
@@ -228,6 +259,19 @@ export class ApiClient {
 
             return apiResponse;
         } catch (error) {
+            console.error('API Client Error:', {
+                url,
+                method: mergedOptions.method,
+                error:
+                    error instanceof Error
+                        ? {
+                              message: error.message,
+                              stack: error.stack,
+                              name: error.name,
+                          }
+                        : error,
+            });
+
             if (error instanceof Error) {
                 if (!(error as Error & { code?: string }).code) {
                     const apiError: APIError = {
@@ -453,5 +497,5 @@ export class ApiClient {
     }
 }
 
-const apiClient = new ApiClient();
+const apiClient = new ApiClient(config.apiUrl, tokenService.getToken);
 export default apiClient;

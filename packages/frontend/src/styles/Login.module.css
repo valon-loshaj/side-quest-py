@@ -46,6 +46,18 @@
     transition: background-color 0.2s ease;
 }
 
+.registerButton {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
 .loginButton:hover {
     background-color: var(--color-primary-dark);
 }

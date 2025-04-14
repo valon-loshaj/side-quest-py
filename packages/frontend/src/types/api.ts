@@ -11,7 +11,8 @@ interface UserRegistrationRequest {
 
 interface UserRegistrationResponse {
     user: User;
-    token: string;
+    auth_token?: string;
+    message?: string;
 }
 
 interface UserLoginRequest {
@@ -22,7 +23,8 @@ interface UserLoginRequest {
 
 interface UserLoginResponse {
     user: User;
-    token: string;
+    auth_token: string;
+    message?: string;
 }
 
 interface ApiResponse<T = unknown> {

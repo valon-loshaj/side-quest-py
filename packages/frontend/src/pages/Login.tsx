@@ -1,14 +1,16 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/hooks/useAuth';
-import { UserLoginRequest } from '../types/api';
+import { UserLoginRequest, UserRegistrationRequest } from '../types/api';
 import { ROUTES, RouteNames } from '../types/routes';
 import styles from '../styles/Login.module.css';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { loginUser, loading, error, clearAuthError } = useAuth();
+    const [email, setEmail] = useState('');
+    const [isRegistering, setIsRegistering] = useState(false);
+    const { loginUser, registerUser, loading, error, clearAuthError } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: FormEvent) => {
@@ -22,6 +24,25 @@ const Login = () => {
 
         const result = await loginUser(credentials);
 
+        if (result.meta.requestStatus === 'fulfilled') {
+            navigate(ROUTES[RouteNames.DASHBOARD].path);
+        }
+    };
+
+    const handleRegisterToggle = () => {
+        setIsRegistering(!isRegistering);
+    };
+
+    const handleRegister = async (e: FormEvent) => {
+        e.preventDefault();
+        console.log('User registration status:', isRegistering);
+
+        const registrationData: UserRegistrationRequest = {
+            username,
+            password,
+            email,
+        };
+        const result = await registerUser(registrationData);
         if (result.meta.requestStatus === 'fulfilled') {
             navigate(ROUTES[RouteNames.DASHBOARD].path);
         }
@@ -55,8 +76,34 @@ const Login = () => {
                     />
                 </div>
 
+                {isRegistering && (
+                    <div className={styles.formGroup}>
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                        />
+                        <button
+                            type="submit"
+                            className={styles.registerButton}
+                            onClick={handleRegister}
+                        >
+                            Register
+                        </button>
+                    </div>
+                )}
+
                 <button type="submit" disabled={loading} className={styles.loginButton}>
                     {loading ? 'Logging in...' : 'Login'}
+                </button>
+                <button
+                    type="button"
+                    className={styles.registerButton}
+                    onClick={handleRegisterToggle}
+                >
+                    Not a user? Register
                 </button>
             </form>
         </div>
