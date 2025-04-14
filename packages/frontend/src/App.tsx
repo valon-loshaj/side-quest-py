@@ -1,15 +1,47 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAppSelector } from './store';
+import { useEffect, useState } from 'react';
+import { useAppSelector, useAppDispatch } from './store';
+import { checkAuthStatus } from './store/slices/authSlice';
 import Layout from './layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
+import AdventurerHub from './pages/AdventurerHub';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ROUTES, RouteNames } from './types/routes';
+import * as tokenService from './services/token-service';
 import './App.css';
 
 function App() {
-    const { isAuthenticated } = useAppSelector(state => state.auth);
+    const { isAuthenticated, loading } = useAppSelector(state => state.auth);
+    const dispatch = useAppDispatch();
+    const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
+
+    useEffect(() => {
+        // Check if we have a token in storage
+        const hasToken = tokenService.hasToken();
+        console.log('App mounted, token exists:', hasToken);
+
+        // Check auth status on app mount
+        const checkAuth = async () => {
+            try {
+                await dispatch(checkAuthStatus()).unwrap();
+                console.log('Auth check completed successfully');
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            } finally {
+                setInitialAuthCheckDone(true);
+            }
+        };
+
+        checkAuth();
+    }, [dispatch]);
+
+    // Only show initial loading spinner while first auth check is happening
+    // This prevents the initial flash of login screen
+    if (loading && !initialAuthCheckDone) {
+        return <div className="app-loading">Loading...</div>;
+    }
 
     return (
         <BrowserRouter>
@@ -57,6 +89,14 @@ function App() {
                         element={
                             <Layout>
                                 <UserManagement />
+                            </Layout>
+                        }
+                    />
+                    <Route
+                        path={ROUTES[RouteNames.ADVENTURER_HUB].path}
+                        element={
+                            <Layout>
+                                <AdventurerHub />
                             </Layout>
                         }
                     />

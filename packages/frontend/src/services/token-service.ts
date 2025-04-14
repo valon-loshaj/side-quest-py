@@ -13,7 +13,11 @@ interface JwtPayload {
  * @returns boolean indicating if token exists
  */
 export const hasToken = (): boolean => {
-    return !!localStorage.getItem(TOKEN_KEY);
+    const hasToken = !!localStorage.getItem(TOKEN_KEY);
+    if (import.meta.env.MODE !== 'production') {
+        console.log('Token exists check:', hasToken);
+    }
+    return hasToken;
 };
 
 /**
@@ -21,7 +25,11 @@ export const hasToken = (): boolean => {
  * @returns token string or null if not found
  */
 export const getToken = (): string | null => {
-    return localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (import.meta.env.MODE !== 'production') {
+        console.log('Retrieved token from storage:', token ? 'exists' : 'not found');
+    }
+    return token;
 };
 
 /**
@@ -29,6 +37,9 @@ export const getToken = (): string | null => {
  * @param token - The JWT token to store
  */
 export const setToken = (token: string): void => {
+    if (import.meta.env.MODE !== 'production') {
+        console.log('Setting token in localStorage');
+    }
     localStorage.setItem(TOKEN_KEY, token);
 };
 
@@ -36,6 +47,9 @@ export const setToken = (token: string): void => {
  * Removes the token from localStorage
  */
 export const removeToken = (): void => {
+    if (import.meta.env.MODE !== 'production') {
+        console.log('Removing token from localStorage');
+    }
     localStorage.removeItem(TOKEN_KEY);
 };
 
@@ -45,14 +59,63 @@ export const removeToken = (): void => {
  */
 export const isTokenValid = (): boolean => {
     const token = getToken();
-    if (!token) return false;
+    if (!token) {
+        if (import.meta.env.MODE !== 'production') {
+            console.log('Token validation failed: No token found');
+        }
+        return false;
+    }
 
     try {
-        const decoded = jwtDecode<JwtPayload>(token);
-        const currentTime = Math.floor(Date.now() / 1000);
+        // Log complete token in dev for debugging
+        if (import.meta.env.MODE !== 'production') {
+            // Only log token length and a small prefix for security
+            const tokenLength = token.length;
+            const tokenPrefix = token.substring(0, 10);
+            console.log(`Token to validate: ${tokenPrefix}... (${tokenLength} chars)`);
 
-        // Check if token is expired (expiration time is in seconds)
-        return decoded.exp > currentTime;
+            // Check token format - should have 3 parts separated by periods
+            const parts = token.split('.');
+            console.log('Token parts count:', parts.length);
+
+            if (parts.length !== 3) {
+                console.error(
+                    'Error: Invalid token format - not a valid JWT. JWT should have 3 parts separated by dots.'
+                );
+                return false;
+            }
+        }
+
+        // Actually decode and verify the token
+        const decoded = jwtDecode<JwtPayload>(token);
+
+        // Check if expiration exists
+        if (!decoded.exp) {
+            console.error('Token is missing expiration claim');
+            return false;
+        }
+
+        const currentTime = Math.floor(Date.now() / 1000);
+        const isValid = decoded.exp > currentTime;
+
+        if (import.meta.env.MODE !== 'production') {
+            const expiryDate = new Date(decoded.exp * 1000);
+            const timeRemaining = Math.floor((decoded.exp - currentTime) / 60); // minutes
+
+            console.log('Token validation result:', isValid ? 'valid' : 'expired', {
+                expires: expiryDate.toISOString(),
+                now: new Date().toISOString(),
+                timeRemaining: timeRemaining,
+                minutesUntilExpiry: timeRemaining,
+            });
+
+            // Warn if token is about to expire
+            if (isValid && timeRemaining < 10) {
+                console.warn(`Token will expire soon (in ${timeRemaining} minutes)`);
+            }
+        }
+
+        return isValid;
     } catch (error) {
         console.error('Error decoding token:', error);
         return false;

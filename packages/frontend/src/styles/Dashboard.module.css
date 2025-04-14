@@ -1,27 +1,71 @@
 .dashboard {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 2rem;
 }
 
 .logoutButton {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+    padding: 0.75rem 1.5rem;
+    background-color: #e53e3e;
+    color: white;
     border: none;
-    padding: 0.5rem 1rem;
     border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.logoutButton:hover {
+    background-color: #c53030;
 }
 
 .welcomeMessage {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    color: #333;
     margin-bottom: 2rem;
-    color: var(--color-primary);
 }
 
 .dashboardContent {
-    background-color: var(--color-white);
+    margin-bottom: 2rem;
+}
+
+.currentAdventurer {
+    background-color: #f8f9fa;
     border-radius: 8px;
-    padding: 2rem;
-    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.currentAdventurer h2 {
+    margin-top: 0;
+    color: #2d3748;
+    margin-bottom: 1rem;
+}
+
+.adventurerName {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+    color: #6b46c1;
+}
+
+.adventurerLevel {
+    font-size: 1.125rem;
+    color: #4a5568;
+    margin: 0.5rem 0;
+}
+
+.manageAdventurerLink {
+    display: inline-block;
+    margin-top: 0.75rem;
+    color: #6b46c1;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.manageAdventurerLink:hover {
+    text-decoration: underline;
 }

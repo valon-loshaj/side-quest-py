@@ -11,3 +11,4 @@ isort==5.13.2
 mypy==1.8.0
 gunicorn==21.2.0
 bcrypt>=4.3.0
+PyJWT>=2.6.0

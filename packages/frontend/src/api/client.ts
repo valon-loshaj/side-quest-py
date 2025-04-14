@@ -42,7 +42,32 @@ export class ApiClient {
 
     private getAuthHeaders(): Record<string, string> {
         const token = this.tokenProvider();
-        return token ? { Authorization: `Bearer ${token}` } : {};
+        if (!token) {
+            console.warn('No auth token found when attempting to create auth headers');
+            return {};
+        }
+
+        // Log token when in development mode
+        if (import.meta.env.MODE !== 'production') {
+            // Only log token length and a small prefix for security
+            const tokenLength = token.length;
+            const tokenPrefix = token.substring(0, 10);
+            console.log(
+                `Including auth token in request: ${tokenPrefix}... (${tokenLength} chars)`
+            );
+
+            // Validate token format (should be a JWT with 3 parts)
+            const parts = token.split('.');
+            if (parts.length !== 3) {
+                console.error(
+                    'Warning: Token does not appear to be in valid JWT format (expected 3 parts separated by dots)'
+                );
+            } else {
+                console.log('Token appears to be in valid JWT format');
+            }
+        }
+
+        return { Authorization: `Bearer ${token}` };
     }
 
     private buildUrl(
@@ -209,9 +234,16 @@ export class ApiClient {
 
         // Log the request details in development
         if (import.meta.env.MODE !== 'production') {
+            // Enhanced logging for authentication debugging
+            const authHeader = headers['Authorization'];
             console.log('API Request:', {
                 url,
                 method: mergedOptions.method,
+                withAuth: mergedOptions.withAuth,
+                hasAuthHeader: !!authHeader,
+                authHeaderValue: authHeader
+                    ? `${authHeader.substring(0, 15)}...`
+                    : 'none',
                 headers: { ...headers },
                 body: mergedOptions.body ? { ...mergedOptions.body } : null,
             });
@@ -231,6 +263,7 @@ export class ApiClient {
                 headers,
                 body,
                 credentials: 'include',
+                mode: 'cors',
             });
 
             const response = await Promise.race([

@@ -1,12 +1,63 @@
-from typing import Tuple
+from typing import Tuple, Any
 
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, Response, jsonify, request, g, current_app
+import logging
 
 from ..models.adventurer import AdventurerNotFoundError, AdventurerValidationError
 from ..services.adventurer_service import AdventurerService
+from ..services.auth_service import AuthService
+from functools import wraps
+from ..models.db_models import Adventurer
 
 adventurer_bp = Blueprint("adventurer", __name__)
 adventurer_service = AdventurerService()
+auth_service = AuthService()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("adventurer_routes")
+
+
+# Helper decorator for routes that require authentication
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args: Any, **kwargs: Any):
+        try:
+            # Get the token from the Authorization header
+            auth_header = request.headers.get("Authorization")
+            if not auth_header:
+                logger.error("No Authorization header provided")
+                return jsonify({"error": "Authorization header is required"}), 401
+
+            # The format should be "Bearer <token>"
+            parts = auth_header.split()
+            if len(parts) != 2 or parts[0].lower() != "bearer":
+                logger.error(f"Invalid Authorization header format: {auth_header}")
+                return jsonify({"error": "Authorization header must be in the format: Bearer <token>"}), 401
+
+            token = parts[1]
+            logger.info(f"Token received: {token[:10]}... (length: {len(token)})")
+
+            # Log token parts for debugging
+            token_parts = token.split(".")
+            logger.info(f"Token parts count: {len(token_parts)}")
+
+            # Validate the token and get the user
+            user = auth_service.validate_token(token)
+            if not user:
+                logger.error("Token validation failed - no user found for this token")
+                return jsonify({"error": "Invalid or expired token"}), 401
+
+            # Store the user in g for later use in the route
+            g.user = user
+            logger.info(f"Authentication successful for user: {user.username}")
+
+            return f(*args, **kwargs)
+        except Exception as e:
+            logger.exception(f"Authentication error: {str(e)}")
+            return jsonify({"error": f"Authentication error: {str(e)}"}), 500
+
+    return decorated_function
 
 
 @adventurer_bp.route("/adventurer", methods=["POST"])
@@ -81,14 +132,22 @@ def get_adventurer(name: str) -> Tuple[Response, int]:
 
 
 @adventurer_bp.route("/adventurers", methods=["GET"])
+@login_required
 def get_all_adventurers() -> Tuple[Response, int]:
-    """Get all adventurers.
+    """Get all adventurers for the authenticated user.
 
     Returns:
-        Tuple[Response, int]: The list of adventurers and HTTP status code
+        Tuple[Response, int]: The list of user's adventurers and HTTP status code
     """
     try:
-        adventurers = adventurer_service.get_all_adventurers()
+        # Get the authenticated user from Flask's g object
+        user = g.user
+        user_id = user.id
+        logger.info(f"Fetching adventurers for user ID: {user_id}")
+
+        # Retrieve only adventurers belonging to this user
+        adventurers = Adventurer.query.filter_by(user_id=user_id).all()
+        logger.info(f"Found {len(adventurers)} adventurers for user")
 
         return (
             jsonify(
@@ -101,6 +160,7 @@ def get_all_adventurers() -> Tuple[Response, int]:
         )
 
     except (TypeError, ValueError) as e:
+        logger.exception(f"Error fetching adventurers: {str(e)}")
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 

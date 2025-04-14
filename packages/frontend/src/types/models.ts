@@ -7,18 +7,17 @@ interface User {
     tokenExpiration: string;
     createdAt: string;
     updatedAt: string;
+    adventurers?: Adventure[];
 }
 
 interface Adventure {
-    id: string;
     name: string;
-    userId: string;
     level: number;
     experience: number;
-    completedQuests: QuestCompletion[];
-    leveledUp: boolean;
-    createdAt: string;
-    updatedAt: string;
+    experience_for_next_level: number;
+    progress_percentage: number;
+    completed_quests_count: number;
+    completed_quests: string[];
 }
 
 interface Quest {

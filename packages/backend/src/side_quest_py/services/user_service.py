@@ -1,16 +1,22 @@
 import secrets
-import string
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import bcrypt
+import jwt
 from ulid import ULID
+from flask import current_app
 
 from .. import db
 from ..models.adventurer import AdventurerNotFoundError
 from ..models.db_models import Adventurer, User
 from ..models.user import UserNotFoundError, UserServiceError, UserValidationError
 from ..services.adventurer_service import AdventurerService
+
+# Actual secret key retrieved from Flask config at runtime
+# This is just a fallback
+JWT_SECRET_KEY_FALLBACK = "development_fallback_key"
 
 
 class UserService:
@@ -93,12 +99,16 @@ class UserService:
 
         Args:
             token: The authentication token of the user
+
+        Returns:
+            Optional[User]: The user with the token or None if not found
         """
         try:
+            # Find user with this token
             user: Optional[User] = User.query.filter_by(auth_token=token).first()
             return user
         except Exception as e:
-            raise UserNotFoundError(f"Error: User with token: {token} not found. {e}") from e
+            raise UserNotFoundError(f"Error: User with token not found. {e}") from e
 
     def get_all_users(self) -> List[User]:
         """Get all users."""
@@ -237,10 +247,15 @@ class UserService:
             if not user.password_hash or not self._check_password(password, user.password_hash):  # type: ignore
                 raise UserValidationError("Invalid username or password")
 
-            # Generate new auth token
+            # Generate new auth token with JWT
             token = self._generate_auth_token()
+
+            # Calculate token expiry time - same as in the JWT payload (24 hours)
+            expiry = datetime.now() + timedelta(hours=24)
+
+            # Save token and expiry to user
             user.auth_token = token  # type: ignore
-            user.token_expiry = datetime.now() + timedelta(hours=24)  # type: ignore
+            user.token_expiry = expiry  # type: ignore
 
             db.session.commit()
             return user
@@ -334,9 +349,33 @@ class UserService:
         return user_dict
 
     def _generate_auth_token(self) -> str:
-        """Generate a secure random token."""
-        alphabet = string.ascii_letters + string.digits
-        return "".join(secrets.choice(alphabet) for _ in range(64))
+        """Generate a JWT token with expiration time."""
+        # Set expiration time to 24 hours from now
+        now = datetime.utcnow()
+        expiry = now + timedelta(hours=24)
+
+        # Create the payload with subject, issued at, and expiration time
+        payload = {
+            "sub": str(secrets.token_hex(8)),  # Unique identifier
+            # Remove iat claim to avoid issues with clock skew
+            "exp": int(expiry.timestamp()),  # Using integer timestamp to avoid precision issues
+            "type": "auth",
+        }
+
+        # Get the secret key from Flask app config if available
+        secret_key = (
+            current_app.config["SECRET_KEY"] if current_app else os.environ.get("SECRET_KEY", JWT_SECRET_KEY_FALLBACK)
+        )
+
+        # Generate the JWT token
+        token = jwt.encode(payload, secret_key, algorithm="HS256")
+
+        # Handle bytes vs string conversion based on jwt version
+        if isinstance(token, bytes):
+            token_str = token.decode("utf-8")
+            return token_str
+        else:
+            return token
 
     def _hash_password(self, password: str) -> str:
         """Hash a password using bcrypt."""

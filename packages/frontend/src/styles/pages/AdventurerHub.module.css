@@ -1,0 +1,106 @@
+.adventurerHub {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.loading,
+.error {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.error {
+    color: #e53e3e;
+}
+
+.createAdventurer,
+.adventurerDetails,
+.noAdventurer {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.createAdventurer h1,
+.adventurerDetails h1 {
+    margin-top: 0;
+    color: #2d3748;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.formGroup input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.createButton,
+.backButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.createButton {
+    background-color: #6b46c1;
+    color: white;
+}
+
+.createButton:hover {
+    background-color: #553c9a;
+}
+
+.backButton {
+    background-color: #e2e8f0;
+    color: #4a5568;
+    margin-right: 1rem;
+}
+
+.backButton:hover {
+    background-color: #cbd5e0;
+}
+
+.adventurerInfo {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.adventurerInfo p {
+    margin: 0;
+    font-size: 1.125rem;
+    color: #4a5568;
+}
+
+.noAdventurer {
+    text-align: center;
+}
+
+.noAdventurer p {
+    margin-bottom: 1.5rem;
+    color: #4a5568;
+}

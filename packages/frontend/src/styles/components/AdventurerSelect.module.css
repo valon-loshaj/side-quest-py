@@ -1,0 +1,225 @@
+.adventurerSelect {
+    width: 100%;
+    padding: 1rem;
+}
+
+.adventurerSelectSidebar {
+    width: 100%;
+    padding: 0.5rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.adventurerList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.adventurerListSidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    width: 100%;
+}
+
+.adventurerCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.adventurerCardSidebar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background-color: #f5f5f5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.adventurerCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.adventurerCardSidebar:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selected {
+    box-shadow: 0 0 0 2px gold, 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.avatarContainer {
+    margin-bottom: 0.5rem;
+}
+
+.adventurerCardSidebar .avatarContainer {
+    margin-bottom: 0;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #6b46c1;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.adventurerCardSidebar .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+}
+
+.adventurerInfo {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.adventurerCardSidebar .adventurerInfo {
+    text-align: left;
+    flex-grow: 1;
+    margin-bottom: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.adventurerName {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.adventurerCardSidebar .adventurerName {
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.adventurerLevel {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0.25rem 0 0;
+}
+
+.adventurerCardSidebar .adventurerLevel {
+    font-size: 0.75rem;
+}
+
+.manageLink {
+    color: #6b46c1;
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.adventurerCardSidebar .manageLink {
+    margin-top: 0;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.manageLink:hover {
+    text-decoration: underline;
+}
+
+.newAdventurerCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    border: 2px dashed #ccc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #333;
+    height: 100%;
+}
+
+.newAdventurerCardSidebar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background-color: #f0f0f0;
+    border: 2px dashed #ccc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.newAdventurerCard:hover {
+    background-color: #e8e8e8;
+    transform: translateY(-5px);
+}
+
+.newAdventurerCardSidebar:hover {
+    background-color: #e8e8e8;
+    transform: translateX(5px);
+}
+
+.newAdventurerIcon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #6b46c1;
+}
+
+.newAdventurerCardSidebar .newAdventurerIcon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.newAdventurerText {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.newAdventurerCardSidebar .newAdventurerText {
+    font-size: 0.875rem;
+    flex-grow: 1;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
