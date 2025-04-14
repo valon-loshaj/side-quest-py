@@ -2,6 +2,7 @@ export enum RouteNames {
     LOGIN = 'login',
     DASHBOARD = 'dashboard',
     USER_MANAGEMENT = 'user_management',
+    ADVENTURER_HUB = 'adventurer_hub',
 }
 
 export interface RouteConfig {
@@ -27,6 +28,11 @@ export const ROUTES: RoutesMap = {
     },
     [RouteNames.USER_MANAGEMENT]: {
         path: '/user-management',
+        exact: true,
+        isProtected: true,
+    },
+    [RouteNames.ADVENTURER_HUB]: {
+        path: '/adventurer/:id',
         exact: true,
         isProtected: true,
     },

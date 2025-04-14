@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from .. import db
 from ..models.adventurer import AdventurerValidationError, LevelCalculator
 from ..models.db_models import Adventurer, QuestCompletion
+from ulid import ULID
 
 
 class AdventurerService:
@@ -43,8 +44,8 @@ class AdventurerService:
             if existing:
                 raise AdventurerValidationError(f"Adventurer with name '{name}' already exists")
 
-            # Create new adventurer
-            adventurer = Adventurer(name=name, level=level, experience=experience, user_id=user_id)
+            # Create new adventurer with a generated ID
+            adventurer = Adventurer(id=str(ULID()), name=name, level=level, experience=experience, user_id=user_id)
 
             # Add to database
             db.session.add(adventurer)
@@ -153,7 +154,7 @@ class AdventurerService:
             adventurer.experience += experience_gain  # type: ignore
 
             required_exp = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
-            if adventurer.experience >= required_exp:
+            if adventurer.experience >= required_exp:  # type: ignore
                 adventurer.level += 1  # type: ignore
                 adventurer.experience = 0  # type: ignore
 
@@ -203,7 +204,7 @@ class AdventurerService:
                 required_exp = self.level_calculator.calculate_req_exp(old_level)  # type: ignore
                 leveled_up = False
 
-                if adventurer.experience >= required_exp:
+                if adventurer.experience >= required_exp:  # type: ignore
                     adventurer.level += 1  # type: ignore
                     adventurer.experience = 0  # type: ignore
                     leveled_up = True
@@ -243,7 +244,7 @@ class AdventurerService:
             "level": adventurer.level,
             "experience": adventurer.experience,
             "experience_for_next_level": experience_for_next_level,
-            "progress_percentage": round(progress_percentage, 2),
+            "progress_percentage": round(progress_percentage, 2),  # type: ignore
             "completed_quests_count": len(completed_quests),
             "completed_quests": completed_quests,
         }

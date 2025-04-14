@@ -35,7 +35,18 @@ export const login = createAsyncThunk<UserLoginResponse, UserLoginRequest>(
             );
 
             if (response.data.auth_token) {
+                // Clear any existing token first
+                tokenService.removeToken();
+                // Then set the new token
                 tokenService.setToken(response.data.auth_token);
+
+                if (import.meta.env.MODE !== 'production') {
+                    console.log('Login successful, token stored');
+                    console.log(
+                        'Token valid after login:',
+                        tokenService.isTokenValid()
+                    );
+                }
             } else {
                 console.error('No auth_token found in login response:', response.data);
             }
@@ -113,21 +124,64 @@ export const getCurrentUser = createAsyncThunk(
 
 export const checkAuthStatus = createAsyncThunk(
     'auth/checkStatus',
-    async (_, { rejectWithValue }) => {
-        const token = tokenService.getToken();
-        if (token && tokenService.isTokenValid()) {
-            try {
-                return await store.dispatch(getCurrentUser()).unwrap();
-            } catch (error: unknown) {
-                const errorMessage =
-                    error instanceof Error
-                        ? error.message
-                        : 'Failed to check auth status';
+    async (_, { rejectWithValue, dispatch }) => {
+        try {
+            const token = tokenService.getToken();
+
+            // Add more detailed logging about token existence
+            console.log('Checking auth status, token exists:', !!token);
+
+            // Check if token exists and is valid
+            if (!token) {
+                console.log('No token found, clearing auth state');
                 tokenService.removeToken();
-                return rejectWithValue(errorMessage);
+                return null;
             }
+
+            const isValid = tokenService.isTokenValid();
+            console.log('Token validation result:', isValid);
+
+            if (!isValid) {
+                console.log('Token is invalid or expired, clearing auth state');
+                tokenService.removeToken();
+                return null;
+            }
+
+            console.log('Valid token found, fetching current user');
+
+            // Directly make the API call instead of dispatching another action
+            try {
+                const response = await apiClient.get<{ user: User }>('/api/v1/auth/me');
+                console.log('User data successfully fetched:', response.data.user?.id);
+                return response.data.user;
+            } catch (error) {
+                console.error('Error fetching user with token:', error);
+
+                // Only remove token on 401 Unauthorized (token rejection)
+                if (
+                    error &&
+                    typeof error === 'object' &&
+                    'code' in error &&
+                    (error.code === 'HTTP_ERROR_401' || error.code === 'UNAUTHORIZED')
+                ) {
+                    console.log(
+                        'Removing token from localStorage due to 401 unauthorized'
+                    );
+                    tokenService.removeToken();
+                    return rejectWithValue('Session expired. Please login again.');
+                }
+
+                // For other errors, keep the token but report the error
+                return rejectWithValue(
+                    'Error connecting to server. Please try again later.'
+                );
+            }
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : 'Failed to check auth status';
+            console.error('Unexpected error in checkAuthStatus:', errorMessage);
+            return rejectWithValue(errorMessage);
         }
-        return null;
     }
 );
 

@@ -11,12 +11,12 @@ interface AdventurerState {
 
 interface CreateAdventurerRequest {
     name: string;
-    userId?: string;
+    userId: string;
     [key: string]: unknown;
 }
 
 interface CompleteQuestRequest {
-    adventurerId: string;
+    adventurerName: string;
     questId: string;
     [key: string]: unknown;
 }
@@ -47,7 +47,7 @@ export const fetchAdventurers = createAsyncThunk(
             const response = await apiClient.get<{
                 adventurers: Adventure[];
                 count: number;
-            }>('/adventurers');
+            }>('/api/v1/adventurers');
             return response.data.adventurers;
         } catch (error: unknown) {
             const errorMessage =
@@ -61,12 +61,28 @@ export const createAdventurer = createAsyncThunk(
     'adventurer/create',
     async (adventurerData: CreateAdventurerRequest, { rejectWithValue }) => {
         try {
-            const response = await apiClient.post<AdventurerResponse>('/adventurer', {
+            console.log('Creating adventurer with data:', {
                 name: adventurerData.name,
                 user_id: adventurerData.userId,
             });
+
+            // Correctly map userId from the request to user_id expected by the API
+            const requestPayload = {
+                name: adventurerData.name,
+                user_id: adventurerData.userId,
+            };
+
+            console.log('Sending request payload:', requestPayload);
+
+            const response = await apiClient.post<AdventurerResponse>(
+                '/api/v1/adventurer',
+                requestPayload
+            );
+
+            console.log('Adventurer created successfully:', response.data);
             return response.data.adventurer;
         } catch (error: unknown) {
+            console.error('Error creating adventurer:', error);
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to create adventurer';
             return rejectWithValue(errorMessage);
@@ -76,10 +92,10 @@ export const createAdventurer = createAsyncThunk(
 
 export const getAdventurer = createAsyncThunk(
     'adventurer/getOne',
-    async (id: string, { rejectWithValue }) => {
+    async (name: string, { rejectWithValue }) => {
         try {
             const response = await apiClient.get<{ adventurer: Adventure }>(
-                `/adventurer/${id}`
+                `/api/v1/adventurer/${name}`
             );
             return response.data.adventurer;
         } catch (error: unknown) {
@@ -95,7 +111,7 @@ export const completeQuest = createAsyncThunk(
     async (data: CompleteQuestRequest, { rejectWithValue }) => {
         try {
             const response = await apiClient.post<QuestCompletionResponse>(
-                `/adventurer/${data.adventurerId}/quest/${data.questId}`
+                `/api/v1/adventurer/${data.adventurerName}/quest/${data.questId}`
             );
 
             return {
@@ -172,7 +188,7 @@ const adventurerSlice = createSlice({
             state.currentAdventurer = action.payload.adventurer;
 
             const index = state.adventurers.findIndex(
-                adv => adv.id === action.payload.adventurer.id
+                adv => adv.name === action.payload.adventurer.name
             );
 
             if (index !== -1) {

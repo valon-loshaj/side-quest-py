@@ -1,13 +1,16 @@
 import React from 'react';
 import CurrentUser from '../components/CurrentUser';
+import AdventurerSelect from '../components/AdventurerSelect';
 import styles from '../styles/layout.module.css';
+import { useAppSelector } from '../store';
 
 const LeftSidebar: React.FC = () => {
+    const { user } = useAppSelector(state => state.auth);
+
     return (
         <aside className={styles.leftSidebar}>
-            <h2>Left Sidebar</h2>
-            <p>Navigation and main menus will go here</p>
             <CurrentUser />
+            {user && <AdventurerSelect />}
         </aside>
     );
 };
