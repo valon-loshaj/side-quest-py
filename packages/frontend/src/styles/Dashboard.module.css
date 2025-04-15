@@ -1,5 +1,5 @@
 .dashboard {
-    max-width: 1200px;
+    max-width: calc(1200px + 4rem);
     margin: 0 auto;
     padding: 2rem;
 }
@@ -14,6 +14,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    margin-top: 2rem;
 }
 
 .logoutButton:hover {
@@ -57,6 +58,13 @@
     margin: 0.5rem 0;
 }
 
+.adventurerId {
+    font-size: 0.875rem;
+    color: #718096;
+    margin: 0.25rem 0;
+    font-family: monospace;
+}
+
 .manageAdventurerLink {
     display: inline-block;
     margin-top: 0.75rem;
@@ -68,4 +76,391 @@
 
 .manageAdventurerLink:hover {
     text-decoration: underline;
+}
+
+/* Dashboard Layout */
+.dashboardLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.mainColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Current Quest Section */
+.currentQuestSection {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: 150px;
+    transition: all 0.3s ease;
+}
+
+.currentQuestSection h2 {
+    margin-top: 0;
+    color: #2d3748;
+    margin-bottom: 1rem;
+}
+
+.currentQuestCard {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 6px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #6b46c1;
+    animation: fadeIn 0.3s ease;
+}
+
+.currentQuestCardHeader {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.noQuestMessage {
+    color: #718096;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+    border: 2px dashed #cbd5e0;
+    border-radius: 6px;
+}
+
+/* All Quests Section */
+.allQuestsSection {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    grid-row: span 2;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.allQuestsSection h2 {
+    margin-top: 0;
+    color: #2d3748;
+    margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    padding: 0.5rem 0;
+    z-index: 1;
+}
+
+.questCard {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #6b46c1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.questCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.questCardHeader {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+.questCardFooter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Quest Styling */
+.questInfo {
+    flex: 1;
+}
+
+.questInfo h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #2d3748;
+    cursor: pointer;
+}
+
+.questInfo p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.questInfo input {
+    width: 100%;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #2d3748;
+    border: 1px solid #6b46c1;
+    border-radius: 4px;
+    padding: 0.25rem;
+}
+
+.questInfo input.xpInput {
+    width: 120px;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.completionIndicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #6b46c1;
+    margin-right: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.completionIndicator.completed {
+    background-color: #6b46c1;
+    position: relative;
+}
+
+.completionIndicator.completed::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 0.8rem;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Quest Action Buttons */
+.questActions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.markCurrentButton,
+.moveButton,
+.deleteButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: none;
+    background-color: #f1f1f1;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    padding: 0;
+}
+
+.markCurrentButton {
+    color: #6b46c1;
+}
+
+.markCurrentButton:hover {
+    background-color: #edf2ff;
+    color: #5a3aa8;
+}
+
+.moveButton:hover {
+    background-color: #edf2ff;
+    color: #2d3748;
+}
+
+.moveButton.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.deleteButton {
+    color: #e53e3e;
+}
+
+.deleteButton:hover {
+    background-color: #fff5f5;
+    color: #c53030;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboardLayout {
+        grid-template-columns: 1fr;
+    }
+
+    .allQuestsSection {
+        grid-row: auto;
+    }
+}
+
+.createQuestButton {
+    background-color: #6b46c1 !important;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.createQuestButton:hover {
+    background-color: #5a3aa8 !important;
+}
+
+/* Loading and Error Message Styling */
+.loadingMessage,
+.errorMessage,
+.noAdventurerMessage {
+    padding: 2rem;
+    text-align: center;
+    margin: 2rem auto;
+    border-radius: 8px;
+    max-width: 600px;
+}
+
+.loadingMessage {
+    background-color: #f0f4f8;
+    color: #4a5568;
+    font-size: 1.25rem;
+    position: relative;
+    animation: pulse 1.5s infinite;
+}
+
+.errorMessage {
+    background-color: #fff5f5;
+    color: #e53e3e;
+    border: 1px solid #feb2b2;
+    font-size: 1.125rem;
+}
+
+.noAdventurerMessage {
+    background-color: #f9f9ff;
+    color: #4c4c6d;
+    border: 1px solid #e2e8f0;
+    font-size: 1.125rem;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.7;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.7;
+    }
+}
+
+/* Debug section styles */
+.debugSection {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1rem;
+    border: 1px dashed #718096;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.debugSection h3 {
+    margin-top: 0;
+    color: #2d3748;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.debugSection h4 {
+    margin-top: 1rem;
+    color: #4a5568;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.debugSection p {
+    margin: 0.25rem 0;
+}
+
+.debugSection details {
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background-color: #edf2f7;
+    border-radius: 4px;
+}
+
+.debugSection summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.debugSection pre {
+    overflow: auto;
+    max-height: 150px;
+    background-color: #f1f5f9;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+}
+
+.debugActions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.debugButton {
+    padding: 0.5rem 1rem;
+    margin-top: 1rem;
+    background-color: #4a5568;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+}
+
+.debugButton:hover:not(:disabled) {
+    background-color: #2d3748;
+}
+
+.debugButton:disabled {
+    background-color: #cbd5e0;
+    cursor: not-allowed;
 }

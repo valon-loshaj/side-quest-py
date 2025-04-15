@@ -11,6 +11,7 @@ interface User {
 }
 
 interface Adventure {
+    id: string;
     name: string;
     level: number;
     experience: number;
@@ -27,6 +28,7 @@ interface Quest {
     completed: boolean;
     createdAt: string;
     updatedAt: string;
+    adventurer_id: string;
 }
 
 interface QuestCompletion {
