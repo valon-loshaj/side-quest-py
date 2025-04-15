@@ -7,6 +7,8 @@ import {
     markQuestAsCompleted,
     clearQuestError,
     setCurrentQuest,
+    updateQuest,
+    deleteQuest,
 } from '../slices/questSlice';
 import { Quest } from '../../types/models';
 
@@ -16,9 +18,12 @@ export const useQuest = () => {
         state => state.quest
     );
 
-    const fetchAllQuests = useCallback(() => {
-        return dispatch(fetchQuests());
-    }, [dispatch]);
+    const fetchAllQuests = useCallback(
+        (adventurerId: string) => {
+            return dispatch(fetchQuests(adventurerId));
+        },
+        [dispatch]
+    );
 
     const createNewQuest = useCallback(
         (title: string, adventurerId?: string, experienceReward?: number) => {
@@ -47,6 +52,20 @@ export const useQuest = () => {
         [dispatch]
     );
 
+    const updateQuestDetails = useCallback(
+        (id: string, questData: Partial<Quest>) => {
+            return dispatch(updateQuest({ id, questData }));
+        },
+        [dispatch]
+    );
+
+    const removeQuest = useCallback(
+        (id: string) => {
+            return dispatch(deleteQuest(id));
+        },
+        [dispatch]
+    );
+
     const clearQuestErrors = useCallback(() => {
         dispatch(clearQuestError());
     }, [dispatch]);
@@ -67,6 +86,8 @@ export const useQuest = () => {
         createNewQuest,
         fetchQuestById,
         completeQuest,
+        updateQuestDetails,
+        removeQuest,
         clearQuestErrors,
         selectQuest,
     };

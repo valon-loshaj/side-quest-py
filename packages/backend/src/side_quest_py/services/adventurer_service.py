@@ -240,6 +240,7 @@ class AdventurerService:
         ]
 
         return {
+            "id": adventurer.id,
             "name": adventurer.name,
             "level": adventurer.level,
             "experience": adventurer.experience,
