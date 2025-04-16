@@ -11,11 +11,14 @@ ENV SECRET_KEY=dev_secret_key
 ENV DATABASE_URL=sqlite:///instance/side_quest_dev.db
 
 # Install dependencies
-COPY requirements.txt requirements-dev.txt /app/
+COPY packages/backend/requirements.txt packages/backend/requirements-dev.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
+# Copy backend project
+COPY packages/backend/ /app/backend/
+WORKDIR /app/backend
+
 # Install the project
-COPY pyproject.toml setup.py /app/
 RUN pip install -e .
 
 # Expose port

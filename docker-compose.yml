@@ -1,30 +1,43 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      - FLASK_APP=src/wsgi.py
-      - FLASK_ENV=production
-      - SECRET_KEY=${SECRET_KEY:-production_secret_key}
-      - DATABASE_URL=sqlite:///instance/side_quest.db
-    volumes:
-      - ./instance:/app/instance
-    restart: always
+    backend:
+        build: .
+        ports:
+            - '5000:5000'
+        environment:
+            - FLASK_APP=src.wsgi:app
+            - FLASK_ENV=production
+            - SECRET_KEY=${SECRET_KEY:-production_secret_key}
+            - DATABASE_URL=sqlite:///instance/side_quest.db
+        volumes:
+            - ./packages/backend/instance:/app/backend/instance
+        restart: always
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:5000/health']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
 
-  # Optional: Add additional services like a database, cache, etc.
-  # Example for a PostgreSQL database:
-  # db:
-  #   image: postgres:14
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data/
-  #   environment:
-  #     - POSTGRES_USER=sidequest
-  #     - POSTGRES_PASSWORD=sidequest_password
-  #     - POSTGRES_DB=sidequest_db
-  #   restart: always
+    # Frontend is built and served from the backend in production
+    # through the static files, so no separate service is needed
+# Optional: Add additional services like a database, cache, etc.
+# Example for a PostgreSQL database:
+# db:
+#   image: postgres:14
+#   volumes:
+#     - postgres_data:/var/lib/postgresql/data/
+#   environment:
+#     - POSTGRES_USER=sidequest
+#     - POSTGRES_PASSWORD=sidequest_password
+#     - POSTGRES_DB=sidequest_db
+#   restart: always
+#   healthcheck:
+#     test: ["CMD-SHELL", "pg_isready -U sidequest"]
+#     interval: 10s
+#     timeout: 5s
+#     retries: 5
 
 # volumes:
 #   postgres_data:
