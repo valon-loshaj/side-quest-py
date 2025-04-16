@@ -24,7 +24,7 @@ interface Adventure {
 interface Quest {
     id: string;
     title: string;
-    experienceReward: number;
+    experience_reward: number;
     completed: boolean;
     createdAt: string;
     updatedAt: string;

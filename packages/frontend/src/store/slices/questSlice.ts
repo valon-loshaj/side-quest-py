@@ -22,6 +22,11 @@ interface QuestResponse {
     quest: Quest;
 }
 
+interface EditingQuestState {
+    id: string | null;
+    field: 'title' | 'experienceReward' | null;
+}
+
 const initialState: QuestState = {
     quests: [],
     currentQuest: null,
@@ -147,7 +152,7 @@ export const updateQuest = createAsyncThunk(
                 `${API_BASE_URL}/quest/${id}`,
                 {
                     title: questData.title,
-                    experience_reward: questData.experienceReward,
+                    experience_reward: questData.experience_reward,
                     completed: questData.completed,
                     adventurer_id: questData.adventurer_id,
                 }
@@ -287,3 +292,4 @@ const questSlice = createSlice({
 
 export const { clearQuestError, setCurrentQuest } = questSlice.actions;
 export default questSlice.reducer;
+export type { EditingQuestState };

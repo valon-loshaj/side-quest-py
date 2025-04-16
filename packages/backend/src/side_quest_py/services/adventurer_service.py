@@ -55,7 +55,7 @@ class AdventurerService:
         except AdventurerValidationError as e:
             db.session.rollback()
             raise e
-        except Exception as e:
+        except (TypeError, ValueError) as e:
             db.session.rollback()
             raise AdventurerValidationError(f"Error creating adventurer: {str(e)}") from e
 
