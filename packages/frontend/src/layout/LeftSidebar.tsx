@@ -9,8 +9,11 @@ const LeftSidebar: React.FC = () => {
 
     return (
         <aside className={styles.leftSidebar}>
+            <h1 className={styles.sidebarHeader}></h1>
             <CurrentUser />
-            {user && <AdventurerSelect />}
+            <div className={styles.adventurerContainer}>
+                {user && <AdventurerSelect />}
+            </div>
         </aside>
     );
 };

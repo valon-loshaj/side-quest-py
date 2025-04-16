@@ -1,19 +1,35 @@
 .userManagement {
+    max-width: calc(1800px + 4rem);
+    margin: 0 auto;
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .userInfo {
     margin-top: 2rem;
-    padding: 1.5rem;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-    max-width: 600px;
+    padding: 1.5rem 2rem;
+    background-color: #5c3e25;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
     margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.userInfo h2 {
+    color: white;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
 }
 
 .infoRow {
     display: flex;
     margin-bottom: 1rem;
+    justify-content: space-between;
 }
 
 .infoRow:last-child {
@@ -21,20 +37,32 @@
 }
 
 .label {
-    width: 120px;
     font-weight: 600;
-    color: #555;
+    color: white;
+    text-align: right;
+    margin-right: 1rem;
 }
 
 .value {
-    flex: 1;
+    color: white;
+    text-align: left;
 }
 
 .updateForm {
-    max-width: 600px;
-    padding: 1.5rem;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
+    width: 100%;
+    max-width: 500px;
+    padding: 1.5rem 2rem;
+    background-color: #5c3e25;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.updateForm h2 {
+    color: white;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
 }
 
 .formGroup {
@@ -45,11 +73,12 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #555;
+    color: white;
+    text-align: center;
 }
 
 .input {
-    width: 100%;
+    width: 80%;
     padding: 0.75rem;
     font-size: 1rem;
     border: 1px solid #ddd;
@@ -59,14 +88,14 @@
 
 .input:focus {
     outline: none;
-    border-color: #4c8bf5;
-    box-shadow: 0 0 0 2px rgba(76, 139, 245, 0.2);
+    border-color: gold;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
 }
 
 .submitButton {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     padding: 0.75rem 1.5rem;
-    background-color: #4c8bf5;
+    background-color: #167600;
     color: white;
     font-size: 1rem;
     font-weight: 500;
@@ -74,31 +103,38 @@
     border-radius: 0.25rem;
     cursor: pointer;
     transition: background-color 0.2s;
+    display: block;
+    width: 100%;
+    max-width: 200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .submitButton:hover {
-    background-color: #3b7de2;
+    background-color: #005d02;
 }
 
 .submitButton:disabled {
-    background-color: #b0c8f0;
+    background-color: #84a97e;
     cursor: not-allowed;
 }
 
 .successMessage {
     padding: 1rem;
     margin-bottom: 1.5rem;
-    background-color: #d4edda;
-    color: #155724;
+    background-color: #167600;
+    color: white;
     border-radius: 0.25rem;
-    border: 1px solid #c3e6cb;
+    border: 1px solid #0c4400;
+    text-align: center;
 }
 
 .errorMessage {
     padding: 1rem;
     margin-bottom: 1.5rem;
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #e53e3e;
+    color: white;
     border-radius: 0.25rem;
-    border: 1px solid #f5c6cb;
+    border: 1px solid #c53030;
+    text-align: center;
 }

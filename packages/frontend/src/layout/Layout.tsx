@@ -3,7 +3,6 @@ import styles from '../styles/layout.module.css';
 import Header from './Header';
 import Footer from './Footer';
 import LeftSidebar from './LeftSidebar';
-import RightSidebar from './RightSidebar';
 import MainContent from './MainContent';
 
 interface LayoutProps {
@@ -16,7 +15,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Header />
             <LeftSidebar />
             <MainContent>{children}</MainContent>
-            <RightSidebar />
             <Footer />
         </div>
     );
