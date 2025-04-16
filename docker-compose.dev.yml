@@ -1,22 +1,42 @@
+version: '3.8'
+
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-      - "5000:5000"
-    environment:
-      - FLASK_APP=src.wsgi:app
-      - FLASK_ENV=development
-      - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
-      - DATABASE_URL=sqlite:///instance/side_quest_dev.db
-    volumes:
-      # Mount source code for hot-reloading
-      - ./src:/app/src
-      - ./instance:/app/instance
-      # Mount tests directory for running tests
-      - ./tests:/app/tests
-    restart: unless-stopped
-    # Command to keep container running for development
-    stdin_open: true
-    tty: true
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        ports:
+            - '5000:5000'
+        environment:
+            - FLASK_APP=src.wsgi:app
+            - FLASK_ENV=development
+            - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
+            - DATABASE_URL=sqlite:///instance/side_quest_dev.db
+        volumes:
+            # Mount source code for hot-reloading
+            - ./packages/backend/src:/app/backend/src
+            - ./packages/backend/instance:/app/backend/instance
+            # Mount tests directory for running tests
+            - ./packages/backend/tests:/app/backend/tests
+        restart: unless-stopped
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:5000/health']
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 5s
+
+    frontend:
+        build:
+            context: ./packages/frontend
+            dockerfile: Dockerfile.dev
+        ports:
+            - '3000:3000'
+        volumes:
+            - ./packages/frontend:/app
+            - /app/node_modules
+        environment:
+            - VITE_API_URL=http://localhost:5000
+        depends_on:
+            - backend
+        restart: unless-stopped

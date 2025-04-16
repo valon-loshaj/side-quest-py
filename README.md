@@ -1,144 +1,155 @@
-# Side Quest Python
+# ✨ Side Quest ✨
 
-A Flask-based application for managing side quests.
+> A modern full-stack app for tracking and managing your side quests! Built with Flask + React + Redux.
 
-## Development Setup
+## 🚀 Quick Start
 
-### 1. Create and activate a virtual environment
+### 🐳 Using Docker (Recommended)
+
+The easiest way to get started is with Docker:
 
 ```bash
+# Start development environment
+docker-compose -f docker-compose.dev.yml up
+```
+
+Then visit:
+
+- 🖥️ **Frontend**: http://localhost:3000
+- 🔧 **Backend API**: http://localhost:5000
+
+### 🧰 Manual Setup
+
+If you prefer setting up manually, you'll need to set up both the frontend and backend:
+
+#### Backend Setup
+
+```bash
+# Navigate to backend
+cd packages/backend
+
+# Create and activate a virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements-dev.txt
+
+# Install the package in development mode
+pip install -e .
+
+# Initialize the database
+flask --app src.wsgi:app init-db
+
+# Run the development server
+flask --app src.wsgi:app run --debug
 ```
 
-### 2. Install dependencies
+#### Frontend Setup
 
 ```bash
-pip install -r requirements.txt
+# Navigate to frontend
+cd packages/frontend
+
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
 ```
 
-### 3. Configure Python Path (Optional)
+## 🏗️ Project Structure
 
-For correct module imports, set up the PYTHONPATH using the provided script:
+This is a monorepo project with the following structure:
+
+```
+side_quest_py/
+├── packages/
+│   ├── backend/          # Flask API backend
+│   │   ├── src/          # Backend source code
+│   │   │   ├── side_quest_py/  # Main application package
+│   │   │   └── wsgi.py    # WSGI entry point
+│   │   ├── tests/        # Backend tests
+│   │   └── ...           # Config files
+│   │
+│   └── frontend/         # React frontend
+│       ├── src/          # Frontend source code
+│       │   ├── components/  # React components
+│       │   ├── pages/    # Page components
+│       │   ├── store/    # Redux store setup
+│       │   └── ...       # Other frontend modules
+│       └── ...           # Config files
+│
+├── docker-compose.yml        # Production Docker composition
+├── docker-compose.dev.yml    # Development Docker composition
+└── ...                       # Root config files
+```
+
+## 🛠️ Development Tools
+
+### 🔄 Database Management
 
 ```bash
-# One-time setup to make script executable
-chmod +x setup_pythonpath.sh
+# Initialize the database
+flask --app src.wsgi:app init-db
 
-# Set up PYTHONPATH in your current terminal session
-source setup_pythonpath.sh
+# Seed the database with sample data
+flask --app src.wsgi:app seed-db
+
+# Reset the database
+flask --app src.wsgi:app reset-db
 ```
 
-This is particularly useful for running Python scripts from the terminal outside your editor.
-
-You can also run commands directly with the correct PYTHONPATH:
+### 🧪 Testing
 
 ```bash
-# Example: Run a Python script with the correct PYTHONPATH
-./setup_pythonpath.sh python your_script.py
+# Run backend tests
+cd packages/backend
+pytest
+
+# Run frontend tests
+cd packages/frontend
+pnpm test
 ```
 
-### 4. Environment Configuration
+## 🚢 Deployment
 
-Create a `.env` file based on the `.env.example` template:
+### 🐳 Docker Production Deployment
 
 ```bash
-cp .env.example .env
+# Build and start production containers
+docker-compose up -d
 ```
 
-Edit the `.env` file to configure your environment:
+This will:
 
-```
-# Key environment variables:
-FLASK_ENV=development  # Options: development, testing, production
-SECRET_KEY=your_secure_key_here
-DATABASE_URL=sqlite:///instance/side_quest_dev.db
-```
+1. Build the frontend and include it in the backend container
+2. Start the production Flask server with Gunicorn
 
-The application uses different database configurations based on the environment:
-- **Development**: `sqlite:///instance/side_quest_dev.db` (default)
-- **Testing**: `sqlite:///instance/side_quest_test.db`
-- **Production**: Set `DATABASE_URL` to a production database (PostgreSQL recommended)
+### ⚙️ Environment Configuration
 
-### 5. Initialize the database
+For production, set these environment variables:
 
 ```bash
-# Create database tables
-flask --app src.side_quest_py init-db
-
-# Optionally seed the database with sample data
-flask --app src.side_quest_py seed-db
-```
-
-To reset the database (drop all tables and recreate them):
-```bash
-flask --app src.side_quest_py reset-db
-```
-
-### 6. Run the development server
-
-```bash
-flask --app src.side_quest_py run --debug
-```
-
-### 7. Verify the application is running
-
-Visit http://127.0.0.1:5000/hello in your browser. You should see "Hello, Side Quest!"
-
-You can also check the database connection status at http://127.0.0.1:5000/health
-
-## Project Structure
-
-- `src/side_quest_py/`: Application package
-  - `__init__.py`: Application factory
-  - `config.py`: Environment-specific configurations
-  - `db.py`: Database utility functions
-  - `models/`: Database models
-  - `routes/`: API routes organized by blueprint
-
-## Database Management
-
-### Database Migrations
-
-When you make changes to your models, create a migration:
-
-```bash
-flask --app src.side_quest_py db migrate -m "Description of changes"
-```
-
-Apply the migration:
-
-```bash
-flask --app src.side_quest_py db upgrade
-```
-
-### Database Environments
-
-#### Development
-
-The development database is used when `FLASK_ENV=development`. It uses SQLite by default.
-
-#### Testing
-
-To run with the testing database:
-
-```bash
-FLASK_ENV=testing flask --app src.side_quest_py run
-```
-
-This is useful for integration tests that need a clean database.
-
-#### Production
-
-For production deployment, set these environment variables:
-
-```
 FLASK_ENV=production
-SECRET_KEY=your_secure_production_key
-DATABASE_URL=your_production_database_url
+SECRET_KEY=<your-secure-production-key>
+DATABASE_URL=<your-production-database-url>
 ```
 
-For production, consider using PostgreSQL:
-```
-DATABASE_URL=postgresql://username:password@hostname:5432/side_quest
-```
+For more advanced database setups, uncomment the database service in `docker-compose.yml`.
+
+## 🌟 Features
+
+- 🔐 User authentication with JWT
+- 📝 Create and manage side quests
+- 🗂️ Organize quests with drag-and-drop
+- 🎯 Track progress on your personal projects
+- 🎨 Modern React interface with Redux state management
+
+## 👩‍💻 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📜 License
+
+This project is licensed under the terms of the MIT license.
