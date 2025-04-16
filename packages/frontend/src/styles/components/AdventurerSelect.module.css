@@ -6,12 +6,13 @@
 .adventurerSelectSidebar {
     width: 100%;
     padding: 0.5rem;
+    overflow-x: visible;
 }
 
 .title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: #333;
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+    color: #167600;
 }
 
 .adventurerList {
@@ -23,38 +24,28 @@
 .adventurerListSidebar {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     max-height: calc(100vh - 250px);
     overflow-y: auto;
     width: 100%;
-}
-
-.adventurerCard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    border-radius: 8px;
-    background-color: #f5f5f5;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    padding: 4px;
 }
 
 .adventurerCardSidebar {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 0.75rem;
-    border-radius: 6px;
-    background-color: #f5f5f5;
+    padding: 0.875rem;
+    border-radius: 8px;
+    background-color: #5c3e25;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     width: 100%;
     box-sizing: border-box;
+    gap: 0.5rem;
+    margin: 2px;
 }
 
 .adventurerCard:hover {
@@ -63,12 +54,17 @@
 }
 
 .adventurerCardSidebar:hover {
-    transform: translateX(5px);
+    transform: translateY(-5px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .selected {
     box-shadow: 0 0 0 2px gold, 0 5px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    outline: 2px solid gold;
+    outline-offset: 0px;
 }
 
 .avatarContainer {
@@ -85,7 +81,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background-color: #6b46c1;
+    background-color: #167600;
     color: white;
     display: flex;
     align-items: center;
@@ -95,9 +91,9 @@
 }
 
 .adventurerCardSidebar .avatar {
-    width: 40px;
-    height: 40px;
-    font-size: 1.25rem;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
 }
 
 .adventurerInfo {
@@ -111,6 +107,7 @@
     margin-bottom: 0;
     min-width: 0;
     overflow: hidden;
+    max-width: calc(100% - 105px);
 }
 
 .adventurerName {
@@ -124,6 +121,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .adventurerLevel {
@@ -133,11 +131,11 @@
 }
 
 .adventurerCardSidebar .adventurerLevel {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
 }
 
 .manageLink {
-    color: #6b46c1;
+    color: #167600;
     text-decoration: none;
     font-size: 0.875rem;
     margin-top: 0.5rem;
@@ -147,62 +145,49 @@
     margin-top: 0;
     font-size: 0.75rem;
     flex-shrink: 0;
+    padding: 0.25rem 0.5rem;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    white-space: nowrap;
 }
 
 .manageLink:hover {
     text-decoration: underline;
 }
 
-.newAdventurerCard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    border-radius: 8px;
-    background-color: #f0f0f0;
-    border: 2px dashed #ccc;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: #333;
-    height: 100%;
-}
-
 .newAdventurerCardSidebar {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 0.75rem;
-    border-radius: 6px;
-    background-color: #f0f0f0;
-    border: 2px dashed #ccc;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #5c3e25;
+    border: 2px dashed #167600;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
-    color: #333;
+    color: white;
     width: 100%;
     box-sizing: border-box;
 }
 
-.newAdventurerCard:hover {
-    background-color: #e8e8e8;
-    transform: translateY(-5px);
-}
-
 .newAdventurerCardSidebar:hover {
-    background-color: #e8e8e8;
-    transform: translateX(5px);
+    box-shadow: 0 0 0 2px gold, 0 5px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    outline: 2px solid gold;
+    outline-offset: 0px;
 }
 
 .newAdventurerIcon {
     font-size: 2rem;
     margin-bottom: 0.5rem;
-    color: #6b46c1;
+    color: #167600;
 }
 
 .newAdventurerCardSidebar .newAdventurerIcon {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     margin-bottom: 0;
     margin-right: 0.75rem;
     flex-shrink: 0;
@@ -214,7 +199,7 @@
 }
 
 .newAdventurerCardSidebar .newAdventurerText {
-    font-size: 0.875rem;
+    font-size: 1rem;
     flex-grow: 1;
 }
 
@@ -222,4 +207,15 @@
     text-align: center;
     padding: 2rem;
     color: #666;
+}
+
+.noAdventurers {
+    text-align: center;
+    padding: 1.5rem;
+    color: #666;
+    background-color: #f0f0f0;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }

@@ -1,5 +1,5 @@
 .dashboard {
-    max-width: calc(1200px + 4rem);
+    max-width: calc(1800px + 4rem);
     margin: 0 auto;
     padding: 2rem;
 }
@@ -22,8 +22,8 @@
 }
 
 .welcomeMessage {
-    font-size: 1.5rem;
-    color: #333;
+    font-size: 3rem;
+    color: white;
     margin-bottom: 2rem;
 }
 
@@ -32,7 +32,7 @@
 }
 
 .currentAdventurer {
-    background-color: #f8f9fa;
+    background-color: #5c3e25;
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 2rem;
@@ -41,7 +41,7 @@
 
 .currentAdventurer h2 {
     margin-top: 0;
-    color: #2d3748;
+    color: white;
     margin-bottom: 1rem;
 }
 
@@ -49,12 +49,12 @@
     font-size: 1.5rem;
     font-weight: bold;
     margin: 0;
-    color: #6b46c1;
+    color: white;
 }
 
 .adventurerLevel {
     font-size: 1.125rem;
-    color: #4a5568;
+    color: white;
     margin: 0.5rem 0;
 }
 
@@ -68,7 +68,7 @@
 .manageAdventurerLink {
     display: inline-block;
     margin-top: 0.75rem;
-    color: #6b46c1;
+    color: #096a00;
     text-decoration: none;
     font-weight: 500;
     font-size: 0.95rem;
@@ -81,7 +81,7 @@
 /* Dashboard Layout */
 .dashboardLayout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 2fr 3fr;
     gap: 2rem;
     margin-bottom: 2rem;
 }
@@ -93,7 +93,7 @@
 
 /* Current Quest Section */
 .currentQuestSection {
-    background-color: #f8f9fa;
+    background-color: #5c3e25;
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 2rem;
@@ -104,14 +104,14 @@
 
 .currentQuestSection h2 {
     margin-top: 0;
-    color: #2d3748;
+    color: white;
     margin-bottom: 1rem;
 }
 
 .currentQuestCard {
     display: flex;
     flex-direction: column;
-    background-color: #fff;
+    background-color: #5c3e25;
     border-radius: 6px;
     padding: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -148,13 +148,13 @@
 
 /* All Quests Section */
 .allQuestsSection {
-    background-color: #f8f9fa;
+    background-color: #5c3e25;
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    grid-row: span 2;
-    max-height: 600px;
+    max-height: 750px;
     overflow-y: auto;
+    opacity: 0.8;
 }
 
 .allQuestsSection h2 {
@@ -166,6 +166,7 @@
     background-color: #f8f9fa;
     padding: 0.5rem 0;
     z-index: 1;
+    border-radius: 8px;
 }
 
 .questCard {
@@ -318,6 +319,12 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1200px) {
+    .dashboardLayout {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboardLayout {
         grid-template-columns: 1fr;
@@ -325,64 +332,50 @@
 
     .allQuestsSection {
         grid-row: auto;
+        max-height: none;
     }
 }
 
 .createQuestButton {
-    background-color: #6b46c1 !important;
+    background-color: #005d02;
     margin-bottom: 1rem;
+    display: block;
     width: 100%;
 }
 
 .createQuestButton:hover {
-    background-color: #5a3aa8 !important;
+    background-color: #5a38a1;
 }
 
 /* Loading and Error Message Styling */
-.loadingMessage,
-.errorMessage,
-.noAdventurerMessage {
-    padding: 2rem;
-    text-align: center;
-    margin: 2rem auto;
-    border-radius: 8px;
-    max-width: 600px;
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-size: 1.5rem;
+    color: #6b46c1;
 }
 
 .loadingMessage {
-    background-color: #f0f4f8;
-    color: #4a5568;
-    font-size: 1.25rem;
-    position: relative;
-    animation: pulse 1.5s infinite;
+    font-size: 1.2rem;
+    color: #6b46c1;
+    text-align: center;
+    padding: 2rem;
 }
 
 .errorMessage {
-    background-color: #fff5f5;
+    font-size: 1.2rem;
     color: #e53e3e;
-    border: 1px solid #feb2b2;
-    font-size: 1.125rem;
+    text-align: center;
+    padding: 2rem;
 }
 
 .noAdventurerMessage {
-    background-color: #f9f9ff;
-    color: #4c4c6d;
-    border: 1px solid #e2e8f0;
-    font-size: 1.125rem;
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 0.7;
-    }
-
-    50% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0.7;
-    }
+    font-size: 1.2rem;
+    color: #4a5568;
+    text-align: center;
+    padding: 2rem;
 }
 
 /* Debug section styles */
