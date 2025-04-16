@@ -9,7 +9,6 @@ import {
     UserRegistrationResponse,
     UserUpdateRequest,
 } from '../../types/api';
-import { store } from '..';
 
 interface AuthState {
     user: User | null;
@@ -124,38 +123,43 @@ export const getCurrentUser = createAsyncThunk(
 
 export const checkAuthStatus = createAsyncThunk(
     'auth/checkStatus',
-    async (_, { rejectWithValue, dispatch }) => {
+    async (_, { rejectWithValue }) => {
         try {
             const token = tokenService.getToken();
 
             // Add more detailed logging about token existence
-            console.log('Checking auth status, token exists:', !!token);
+            console.log('AuthSlice: Checking auth status, token exists:', !!token);
 
             // Check if token exists and is valid
             if (!token) {
-                console.log('No token found, clearing auth state');
+                console.log('AuthSlice: No token found, clearing auth state');
                 tokenService.removeToken();
                 return null;
             }
 
             const isValid = tokenService.isTokenValid();
-            console.log('Token validation result:', isValid);
+            console.log('AuthSlice: Token validation result:', isValid);
 
             if (!isValid) {
-                console.log('Token is invalid or expired, clearing auth state');
+                console.log(
+                    'AuthSlice: Token is invalid or expired, clearing auth state'
+                );
                 tokenService.removeToken();
                 return null;
             }
 
-            console.log('Valid token found, fetching current user');
+            console.log('AuthSlice: Valid token found, fetching current user');
 
             // Directly make the API call instead of dispatching another action
             try {
                 const response = await apiClient.get<{ user: User }>('/api/v1/auth/me');
-                console.log('User data successfully fetched:', response.data.user?.id);
+                console.log(
+                    'AuthSlice: User data successfully fetched:',
+                    response.data.user?.id
+                );
                 return response.data.user;
             } catch (error) {
-                console.error('Error fetching user with token:', error);
+                console.error('AuthSlice: Error fetching user with token:', error);
 
                 // Only remove token on 401 Unauthorized (token rejection)
                 if (
@@ -165,7 +169,7 @@ export const checkAuthStatus = createAsyncThunk(
                     (error.code === 'HTTP_ERROR_401' || error.code === 'UNAUTHORIZED')
                 ) {
                     console.log(
-                        'Removing token from localStorage due to 401 unauthorized'
+                        'AuthSlice: Removing token from localStorage due to 401 unauthorized'
                     );
                     tokenService.removeToken();
                     return rejectWithValue('Session expired. Please login again.');
@@ -179,7 +183,10 @@ export const checkAuthStatus = createAsyncThunk(
         } catch (error: unknown) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to check auth status';
-            console.error('Unexpected error in checkAuthStatus:', errorMessage);
+            console.error(
+                'AuthSlice: Unexpected error in checkAuthStatus:',
+                errorMessage
+            );
             return rejectWithValue(errorMessage);
         }
     }
@@ -271,6 +278,32 @@ const authSlice = createSlice({
         builder.addCase(updateUser.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
+        });
+
+        builder.addCase(checkAuthStatus.pending, state => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(checkAuthStatus.fulfilled, (state, action) => {
+            state.loading = false;
+            if (action.payload) {
+                state.user = action.payload;
+                state.isAuthenticated = true;
+                console.log('AuthSlice reducer: User authenticated successfully');
+            } else {
+                state.user = null;
+                state.isAuthenticated = false;
+                console.log(
+                    'AuthSlice reducer: No user data returned, setting as not authenticated'
+                );
+            }
+        });
+        builder.addCase(checkAuthStatus.rejected, (state, action) => {
+            state.loading = false;
+            state.user = null;
+            state.isAuthenticated = false;
+            state.error = (action.payload as string) || 'Authentication failed';
+            console.log('AuthSlice reducer: Auth check rejected, clearing user state');
         });
     },
 });

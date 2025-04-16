@@ -53,6 +53,7 @@ export interface UserUpdateRequest {
     username?: string;
     email?: string;
     password?: string;
+    [key: string]: unknown;
 }
 
 export type {
