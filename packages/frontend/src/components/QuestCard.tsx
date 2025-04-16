@@ -7,6 +7,7 @@ interface QuestCardProps {
     isCurrent?: boolean;
     onToggleCompletion: (questId: string) => void;
     onEdit: (questId: string, field: 'title' | 'experienceReward') => void;
+    onSaveEdit: () => void;
     onInputChange: (value: string) => void;
     onInputBlur: () => void;
     onInputKeyDown: (e: React.KeyboardEvent) => void;
@@ -25,6 +26,7 @@ const QuestCard: React.FC<QuestCardProps> = ({
     isCurrent = false,
     onToggleCompletion,
     onEdit,
+    onSaveEdit,
     onInputChange,
     onInputBlur,
     onInputKeyDown,
@@ -52,29 +54,47 @@ const QuestCard: React.FC<QuestCardProps> = ({
                 ></div>
                 <div className={styles.questInfo}>
                     {isEditing && editingQuest.field === 'title' ? (
-                        <input
-                            type="text"
-                            value={editValue}
-                            onChange={e => onInputChange(e.target.value)}
-                            onBlur={onInputBlur}
-                            onKeyDown={onInputKeyDown}
-                            autoFocus
-                        />
+                        <div className={styles.inputGroup}>
+                            <input
+                                type="text"
+                                value={editValue}
+                                onChange={e => onInputChange(e.target.value)}
+                                onBlur={onInputBlur}
+                                onKeyDown={onInputKeyDown}
+                                autoFocus
+                            />
+                            <button
+                                className={styles.saveButton}
+                                onClick={onSaveEdit}
+                                title="Save changes"
+                            >
+                                ✓
+                            </button>
+                        </div>
                     ) : (
                         <h3 onClick={() => onEdit(quest.id, 'title')}>{quest.title}</h3>
                     )}
 
                     {isEditing && editingQuest.field === 'experienceReward' ? (
-                        <input
-                            type="number"
-                            className={styles.xpInput}
-                            value={editValue}
-                            onChange={e => onInputChange(e.target.value)}
-                            onBlur={onInputBlur}
-                            onKeyDown={onInputKeyDown}
-                            autoFocus
-                            min="1"
-                        />
+                        <div className={styles.inputGroup}>
+                            <input
+                                type="number"
+                                className={styles.xpInput}
+                                value={editValue}
+                                onChange={e => onInputChange(e.target.value)}
+                                onBlur={onInputBlur}
+                                onKeyDown={onInputKeyDown}
+                                autoFocus
+                                min="1"
+                            />
+                            <button
+                                className={styles.saveButton}
+                                onClick={onSaveEdit}
+                                title="Save changes"
+                            >
+                                ✓
+                            </button>
+                        </div>
                     ) : (
                         <p onClick={() => onEdit(quest.id, 'experienceReward')}>
                             XP: {quest.experience_reward}
