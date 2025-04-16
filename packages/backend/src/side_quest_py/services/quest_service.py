@@ -112,17 +112,22 @@ class QuestService:
             raise QuestServiceError(f"Error getting uncompleted quests: {str(e)}") from e
 
     def update_quest(
-        self, quest_id: str, title: str, adventurer_id: str, experience_reward: int, completed: bool
+        self,
+        quest_id: str,
+        title: Optional[str] = None,
+        adventurer_id: Optional[str] = None,
+        experience_reward: Optional[int] = None,
+        completed: Optional[bool] = None,
     ) -> Quest:
         """
-        Update a quest.
+        Update a quest with partial data.
 
         Args:
             quest_id: The string ID of the quest
-            title: The title of the quest
-            adventurer_id: The ID of the adventurer who is assigned the quest
-            experience_reward: The experience reward for completing the quest
-            completed: Whether the quest has been completed
+            title: Optional - The title of the quest
+            adventurer_id: Optional - The ID of the adventurer who is assigned the quest
+            experience_reward: Optional - The experience reward for completing the quest
+            completed: Optional - Whether the quest has been completed
 
         Returns:
             Quest: The updated quest
@@ -139,15 +144,22 @@ class QuestService:
             # Save previous completion status
             was_previously_completed = quest.completed
 
-            # Check if quest is being marked as incomplete after being completed
-            if was_previously_completed is True and completed is False:
-                quest_completion_service = QuestCompletionService()
-                quest_completion_service.delete_quest_completion(quest_id)
+            # Update fields only if they are provided
+            if title is not None:
+                setattr(quest, "title", title)
 
-            setattr(quest, "title", title)
-            setattr(quest, "adventurer_id", adventurer_id)
-            setattr(quest, "experience_reward", experience_reward)
-            setattr(quest, "completed", completed)
+            if adventurer_id is not None:
+                setattr(quest, "adventurer_id", adventurer_id)
+
+            if experience_reward is not None:
+                setattr(quest, "experience_reward", experience_reward)
+
+            if completed is not None:
+                # Check if quest is being marked as incomplete after being completed
+                if was_previously_completed is True and completed is False:
+                    quest_completion_service = QuestCompletionService()
+                    quest_completion_service.delete_quest_completion(quest_id)
+                setattr(quest, "completed", completed)
 
             db.session.commit()
 

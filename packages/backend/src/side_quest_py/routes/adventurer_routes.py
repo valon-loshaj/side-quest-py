@@ -61,6 +61,7 @@ def login_required(f):
 
 
 @adventurer_bp.route("/adventurer", methods=["POST"])
+@login_required
 def create_adventurer() -> Tuple[Response, int]:
     """Create a new adventurer.
 
@@ -107,6 +108,7 @@ def create_adventurer() -> Tuple[Response, int]:
 
 
 @adventurer_bp.route("/adventurer/<name>", methods=["GET"])
+@login_required
 def get_adventurer(name: str) -> Tuple[Response, int]:
     """Get an adventurer by name.
 
@@ -165,6 +167,7 @@ def get_all_adventurers() -> Tuple[Response, int]:
 
 
 @adventurer_bp.route("/adventurer/<name>/quest/<quest_id>", methods=["POST"])
+@login_required
 def complete_quest(name: str, quest_id: str) -> Tuple[Response, int]:
     """Record quest completion for an adventurer.
 

@@ -6,12 +6,7 @@ import styles from '../styles/Dashboard.module.css';
 import { logout } from '../store/slices/authSlice';
 import { Link } from 'react-router-dom';
 import { Quest } from '../types/models';
-
-// Interface for quest being edited
-interface EditingQuestState {
-    id: string | null;
-    field: 'title' | 'experienceReward' | null;
-}
+import { EditingQuestState } from '../store/slices/questSlice';
 
 const Dashboard: React.FC = () => {
     const { user, loading: authLoading } = useAppSelector(state => state.auth);
@@ -270,7 +265,15 @@ const Dashboard: React.FC = () => {
         if (!quest) return;
 
         setEditingQuest({ id: questId, field });
-        setEditValue(String(quest[field]));
+
+        // Map frontend field names to API field names
+        const fieldMapping: Record<string, string> = {
+            title: 'title',
+            experienceReward: 'experience_reward',
+        };
+
+        // Use the mapped field name to access the quest property
+        setEditValue(String(quest[fieldMapping[field] as keyof Quest]));
     };
 
     // Save edited value
@@ -286,7 +289,6 @@ const Dashboard: React.FC = () => {
                 adventurer_id: currentAdventurer.id,
             }).then(result => {
                 if (result.meta.requestStatus !== 'fulfilled') {
-                    // Show an error message
                     alert(`Error updating quest title: ${error || 'Unknown error'}`);
                 }
             });
@@ -294,11 +296,10 @@ const Dashboard: React.FC = () => {
             const xpValue = parseInt(editValue, 10);
             if (!isNaN(xpValue)) {
                 updateQuestDetails(editingQuest.id, {
-                    experienceReward: xpValue,
+                    experience_reward: xpValue,
                     adventurer_id: currentAdventurer.id,
                 }).then(result => {
                     if (result.meta.requestStatus !== 'fulfilled') {
-                        // Show an error message
                         alert(
                             `Error updating quest experience reward: ${error || 'Unknown error'}`
                         );
@@ -401,7 +402,7 @@ const Dashboard: React.FC = () => {
                                     startEditing(quest.id, 'experienceReward')
                                 }
                             >
-                                XP: {quest.experienceReward}
+                                XP: {quest.experience_reward}
                             </p>
                         )}
                     </div>

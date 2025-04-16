@@ -13,68 +13,43 @@ import * as tokenService from './services/token-service';
 import './App.css';
 
 function App() {
-    const { isAuthenticated, loading, user } = useAppSelector(state => state.auth);
+    const { isAuthenticated, loading } = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
     const authCheckRef = useRef(false);
 
-    // Debug logging for App component state
     useEffect(() => {
-        console.log('App: Auth state updated', {
-            isAuthenticated,
-            loading,
-            initialAuthCheckDone,
-            hasUser: !!user,
-            userId: user?.id,
-            authCheckStarted: authCheckRef.current,
-        });
-    }, [isAuthenticated, loading, initialAuthCheckDone, user]);
-
-    useEffect(() => {
-        // Use a ref to ensure we only run this once regardless of rerenders
         if (authCheckRef.current) {
             return;
         }
 
-        // Check if we have a token in storage
         const hasToken = tokenService.hasToken();
-        console.log('App: Initial mount, token exists:', hasToken);
-
-        // Mark that we've started an auth check
         authCheckRef.current = true;
 
-        // Only run the auth check if we have a token to validate
         if (!hasToken) {
-            console.log('App: No token exists, skipping auth check');
             setInitialAuthCheckDone(true);
             return;
         }
 
-        // Check auth status on app mount
         const checkAuth = async () => {
             try {
-                console.log('App: Starting auth check');
                 await dispatch(checkAuthStatus()).unwrap();
-                console.log('App: Auth check completed successfully');
             } catch (error) {
                 console.error('App: Auth check failed:', error);
             } finally {
-                console.log('App: Setting initialAuthCheckDone to true');
                 setInitialAuthCheckDone(true);
             }
         };
 
         checkAuth();
-    }, []); // Empty dependency array to run only once
+    }, []);
 
     // Only show initial loading spinner while first auth check is happening
-    // This prevents the initial flash of login screen
+    // Prevents the initial flash of login screen
     if (loading && !initialAuthCheckDone) {
-        console.log('App: Showing initial loading spinner');
         return <div className="app-loading">Loading...</div>;
     }
 
-    // Continue with the regular rendering logic
     return (
         <BrowserRouter>
             <Routes>

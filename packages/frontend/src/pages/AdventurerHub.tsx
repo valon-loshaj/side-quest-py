@@ -87,6 +87,11 @@ const AdventurerHub: React.FC = () => {
                 throw new Error('User is not authenticated');
             }
 
+            console.log(
+                '[AdventurerHub] Creating new adventurer with name and userId:',
+                adventurerName,
+                user.id
+            );
             await createNewAdventurer(adventurerName, user.id);
             navigate('/dashboard');
         } catch (err) {
