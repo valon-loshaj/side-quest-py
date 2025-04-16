@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { useAdventurer } from '../store/hooks/useAdventurer';
 import { useQuest } from '../store/hooks/useQuest';
@@ -14,8 +14,9 @@ interface EditingQuestState {
 }
 
 const Dashboard: React.FC = () => {
-    const { user } = useAppSelector(state => state.auth);
-    const { currentAdventurer, fetchAllAdventurers } = useAdventurer();
+    const { user, loading: authLoading } = useAppSelector(state => state.auth);
+    const { currentAdventurer, adventurers, fetchAllAdventurers, selectAdventurer } =
+        useAdventurer();
     const {
         quests,
         loading,
@@ -33,22 +34,71 @@ const Dashboard: React.FC = () => {
         field: null,
     });
     const [editValue, setEditValue] = useState<string>('');
+    const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+    const [adventurersLoading, setAdventurersLoading] = useState(false);
+    const [questsLoading, setQuestsLoading] = useState(false);
+    const adventurersFetchedRef = useRef(false);
 
+    // Debug information
     useEffect(() => {
-        // Fetch adventurers if they are not available in the user object
-        if (!user?.adventurers?.length) {
-            console.log('No adventurers found, fetching adventurers');
-            fetchAllAdventurers();
-        } else {
-            console.log('User has adventurers:', user.adventurers);
-        }
-    }, [user, fetchAllAdventurers]);
+        console.log('Dashboard: Auth state', {
+            user: user?.id,
+            authLoading,
+            initialLoadAttempted,
+            adventurers: adventurers.length,
+            currentAdventurer: currentAdventurer?.id || 'none',
+            adventurersFetched: adventurersFetchedRef.current,
+        });
+    }, [
+        user,
+        authLoading,
+        initialLoadAttempted,
+        adventurers.length,
+        currentAdventurer,
+    ]);
 
+    // First useEffect - fetch adventurers once user data is available
+    useEffect(() => {
+        // Only fetch if we have a user but no adventurers
+        if (user && !adventurers.length && !adventurersFetchedRef.current) {
+            console.log('Dashboard: No adventurers found, fetching adventurers');
+            adventurersFetchedRef.current = true;
+            setInitialLoadAttempted(true);
+            setAdventurersLoading(true);
+            fetchAllAdventurers()
+                .then(() => {
+                    console.log('Dashboard: Adventurers fetched successfully');
+                })
+                .catch(err => {
+                    console.error('Dashboard: Error fetching adventurers:', err);
+                })
+                .finally(() => {
+                    setAdventurersLoading(false);
+                });
+        } else if (user && user.adventurers?.length && !adventurersFetchedRef.current) {
+            console.log('Dashboard: User has adventurers:', user.adventurers);
+            adventurersFetchedRef.current = true;
+        }
+    }, [user, adventurers.length, fetchAllAdventurers]);
+
+    // Second useEffect - select the first adventurer if none is selected but adventurers are available
+    useEffect(() => {
+        if (!currentAdventurer && adventurers.length > 0) {
+            console.log(
+                'Dashboard: No current adventurer selected, selecting the first one:',
+                adventurers[0].name
+            );
+            selectAdventurer(adventurers[0]);
+        }
+    }, [adventurers, currentAdventurer, selectAdventurer]);
+
+    // Third useEffect - fetch quests for the current adventurer
     useEffect(() => {
         // Fetch quests if we have an adventurer
         if (currentAdventurer?.id) {
             console.log(`Fetching quests for adventurer ID: ${currentAdventurer.id}`);
             console.log('Current adventurer:', currentAdventurer);
+            setQuestsLoading(true);
             fetchAllQuests(currentAdventurer.id)
                 .then(result => {
                     console.log('Fetch quests result:', result);
@@ -60,6 +110,9 @@ const Dashboard: React.FC = () => {
                 })
                 .catch(err => {
                     console.error('Error in fetchAllQuests:', err);
+                })
+                .finally(() => {
+                    setQuestsLoading(false);
                 });
         } else {
             console.log('No current adventurer or adventurer ID, skipping quest fetch');
@@ -76,11 +129,51 @@ const Dashboard: React.FC = () => {
         }
     }, [quests, currentQuestId]);
 
-    if (!user) return null;
-
     const handleLogout = () => {
         dispatch(logout());
     };
+
+    // Don't return null during initial load, show a loading state instead
+    if (authLoading) {
+        console.log('Dashboard: Auth loading');
+        return <div className={styles.loadingContainer}>Authenticating...</div>;
+    }
+
+    if (!user) {
+        console.log('Dashboard: User not available yet');
+        return <div className={styles.loadingContainer}>Loading user data...</div>;
+    }
+
+    // Show a loading state for adventurers
+    if (adventurersLoading) {
+        console.log('Dashboard: Loading adventurers');
+        return <div className={styles.loadingContainer}>Loading adventurers...</div>;
+    }
+
+    // Show a more detailed loading state
+    if (loading || questsLoading) {
+        return (
+            <div className={styles.dashboard}>
+                <h1>Dashboard</h1>
+                <div className={styles.loadingMessage}>
+                    {questsLoading ? 'Loading quests...' : 'Loading...'}
+                    {currentAdventurer && <> for {currentAdventurer.name}</>}
+                </div>
+
+                {/* Debug section */}
+                <div className={styles.debugSection}>
+                    <h3>Debug Info:</h3>
+                    <p>Loading: {loading ? 'true' : 'false'}</p>
+                    <p>Quests Loading: {questsLoading ? 'true' : 'false'}</p>
+                    <p>Error: {error || 'none'}</p>
+                    <p>Current Adventurer ID: {currentAdventurer?.id || 'none'}</p>
+                    <button className={styles.logoutButton} onClick={handleLogout}>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // Validate currentAdventurer before displaying
     const isValidAdventurer =
