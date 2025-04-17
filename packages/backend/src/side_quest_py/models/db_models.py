@@ -16,6 +16,7 @@ class Adventurer(db.Model):  # type: ignore
     name = Column(String(100), nullable=False)
     level = Column(Integer, default=1)
     experience = Column(Integer, default=0)
+    adventurer_type = Column(String(100), default="default")
     leveled_up = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)

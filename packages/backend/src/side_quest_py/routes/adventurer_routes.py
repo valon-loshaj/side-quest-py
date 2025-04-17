@@ -76,17 +76,20 @@ def create_adventurer() -> Tuple[Response, int]:
 
         name = data.get("name")
         user_id = data.get("user_id")
+        adventurer_type = data.get("adventurer_type", "default")
 
         if not name:
             return jsonify({"error": "Name is required"}), 400
         if not user_id:
             return jsonify({"error": "User ID is required"}), 400
+        if not adventurer_type:
+            return jsonify({"error": "Adventurer type is required"}), 400
 
         level = data.get("level", 1)
         experience = data.get("experience", 0)
 
         adventurer = adventurer_service.create_adventurer(
-            name=name, user_id=user_id, level=level, experience=experience
+            name=name, user_id=user_id, level=level, experience=experience, adventurer_type=adventurer_type
         )
 
         return (

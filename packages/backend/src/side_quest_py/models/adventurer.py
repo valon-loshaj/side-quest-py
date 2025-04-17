@@ -88,6 +88,7 @@ class Adventurer:
     id: str = field(default_factory=lambda: str(ULID()))
     level: int = field(default=1)
     experience: int = field(default=0)
+    adventurer_type: str = field(default="default")
     completed_quests: List[QuestCompletion] = field(default_factory=list)
     leveled_up: bool = field(default=False)
     created_at: datetime = field(default_factory=datetime.now)
@@ -102,6 +103,7 @@ class Adventurer:
             self._validate_level()
             self._validate_experience()
             self._validate_user_id()
+            self._validate_adventurer_type()
 
         except ValueError as e:
             raise AdventurerValidationError(f"Error validating adventurer: {str(e)}") from e
@@ -132,3 +134,8 @@ class Adventurer:
         """Validate the adventurer's user ID."""
         if not isinstance(self.user_id, str) or not self.user_id.strip():
             raise AdventurerValidationError("User ID cannot be empty")
+
+    def _validate_adventurer_type(self) -> None:
+        """Validate the adventurer's type."""
+        if not isinstance(self.adventurer_type, str) or not self.adventurer_type.strip():
+            raise AdventurerValidationError("Adventurer type cannot be empty")

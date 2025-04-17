@@ -13,7 +13,9 @@ class AdventurerService:
         """Initialize the adventurer service with a level calculator."""
         self.level_calculator = LevelCalculator()
 
-    def create_adventurer(self, name: str, user_id: str, level: int = 1, experience: int = 0) -> Adventurer:
+    def create_adventurer(
+        self, name: str, user_id: str, level: int = 1, experience: int = 0, adventurer_type: str = "default"
+    ) -> Adventurer:
         """
         Create a new adventurer.
 
@@ -38,6 +40,8 @@ class AdventurerService:
                 raise AdventurerValidationError("Experience cannot be negative")
             if not user_id:
                 raise AdventurerValidationError("User ID cannot be empty")
+            if not adventurer_type:
+                raise AdventurerValidationError("Adventurer type cannot be empty")
 
             # Check if adventurer with the same name already exists
             existing = self.get_adventurer(name)
@@ -45,7 +49,14 @@ class AdventurerService:
                 raise AdventurerValidationError(f"Adventurer with name '{name}' already exists")
 
             # Create new adventurer with a generated ID
-            adventurer = Adventurer(id=str(ULID()), name=name, level=level, experience=experience, user_id=user_id)
+            adventurer = Adventurer(
+                id=str(ULID()),
+                name=name,
+                level=level,
+                experience=experience,
+                user_id=user_id,
+                adventurer_type=adventurer_type,
+            )
 
             # Add to database
             db.session.add(adventurer)
@@ -243,6 +254,7 @@ class AdventurerService:
             "id": adventurer.id,
             "name": adventurer.name,
             "level": adventurer.level,
+            "adventurer_type": adventurer.adventurer_type,
             "experience": adventurer.experience,
             "experience_for_next_level": experience_for_next_level,
             "progress_percentage": round(progress_percentage, 2),  # type: ignore

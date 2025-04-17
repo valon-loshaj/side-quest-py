@@ -111,11 +111,11 @@
 .currentQuestCard {
     display: flex;
     flex-direction: column;
-    background-color: #5c3e25;
+    background-color: #2d3748;
     border-radius: 6px;
     padding: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid #6b46c1;
+    border-left: 4px solid #096a00;
     animation: fadeIn 0.3s ease;
 }
 

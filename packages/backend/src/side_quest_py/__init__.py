@@ -27,20 +27,22 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     Returns:
         Flask: Configured Flask application instance
     """
-    app = Flask(__name__, instance_relative_config=True)
-
-    # Ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-
     # Get environment, default to development if not specified
     env = os.environ.get("FLASK_ENV", "development")
 
-    # Import config classes and apply environment-specific config
+    # Import config classes
     from src.side_quest_py.config import config as config_dict  # noqa: E402
 
+    # Set the instance path to the backend/instance directory
+    instance_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "instance"))
+
+    # Ensure the instance directory exists
+    os.makedirs(instance_path, exist_ok=True)
+
+    # Create Flask app with custom instance path
+    app = Flask(__name__, instance_path=instance_path)
+
+    # Apply configuration
     app.config.from_object(config_dict[env])
 
     # Override with any passed config values
@@ -95,40 +97,15 @@ def register_cli_commands(app: Flask) -> None:
     Args:
         app: Flask application instance
     """
+    # Import the CLI command functions from the scripts
+    from scripts.db.init_db import init_db_command as init_db
+    from scripts.db.reset_db import reset_db_command as reset_db
+    from scripts.db.seed_db import seed_db_command as seed_db
 
-    @app.cli.command("init-db")
-    def init_db_command():
-        """Create database tables without dropping existing data."""
-        print("Initializing the database...")
-        print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        from src.side_quest_py.db_utils import init_db  # noqa: E402
-
-        init_db(app)
-        print("Database initialized successfully")
-
-    @app.cli.command("reset-db")
-    def reset_db_command():
-        """Clear existing data and create new tables."""
-        print("Resetting the database...")
-        print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        from src.side_quest_py.db_utils import reset_db  # noqa: E402
-
-        reset_db(app)
-        print("Database reset successfully")
-
-    @app.cli.command("seed-db")
-    def seed_db_command():
-        """Seed the database with sample data."""
-        print("Seeding the database...")
-        print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        try:
-            from src.side_quest_py.db_utils import seed_db  # noqa: E402
-
-            seed_db(app)
-            print("Database seeded successfully")
-        except Exception as e:
-            print(f"Error seeding database: {e}")
-            raise
+    # Register the commands with the application
+    app.cli.add_command(init_db)
+    app.cli.add_command(reset_db)
+    app.cli.add_command(seed_db)
 
     @app.cli.command("db-status")
     def db_status_command():

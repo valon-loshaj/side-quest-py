@@ -12,6 +12,7 @@ interface AdventurerState {
 interface CreateAdventurerRequest {
     name: string;
     userId: string;
+    adventurer_type: string;
     [key: string]: unknown;
 }
 
@@ -64,12 +65,14 @@ export const createAdventurer = createAsyncThunk(
             console.log('Creating adventurer with data:', {
                 name: adventurerData.name,
                 user_id: adventurerData.userId,
+                adventurer_type: adventurerData.adventurer_type,
             });
 
             // Correctly map userId from the request to user_id expected by the API
             const requestPayload = {
                 name: adventurerData.name,
                 user_id: adventurerData.userId,
+                adventurer_type: adventurerData.adventurer_type,
             };
 
             console.log('Sending request payload:', requestPayload);

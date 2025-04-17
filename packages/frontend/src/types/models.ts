@@ -19,6 +19,7 @@ interface Adventure {
     progress_percentage: number;
     completed_quests_count: number;
     completed_quests: string[];
+    adventurer_type?: string;
 }
 
 interface Quest {

@@ -212,9 +212,9 @@
 .noAdventurers {
     text-align: center;
     padding: 1.5rem;
-    color: #666;
-    background-color: #f0f0f0;
-    border: 2px dashed #ccc;
+    color: white;
+    background-color: #5c3e25;
+    border: 2px dashed #167600;
     border-radius: 8px;
     font-size: 0.95rem;
     line-height: 1.5;
