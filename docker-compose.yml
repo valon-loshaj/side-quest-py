@@ -10,6 +10,7 @@ services:
             - FLASK_ENV=production
             - SECRET_KEY=${SECRET_KEY:-production_secret_key}
             - DATABASE_URL=sqlite:///instance/side_quest.db
+            - SEED_DB=${SEED_DB:-false}
         volumes:
             - ./packages/backend/instance:/app/backend/instance
         restart: always

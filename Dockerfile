@@ -28,6 +28,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_ENV=production
 
+# Install dependencies including curl for healthcheck
+RUN apt-get update && apt-get install -y curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY packages/backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
@@ -42,10 +46,14 @@ RUN pip install -e .
 # Copy built frontend from the first stage
 COPY --from=frontend-build /app/packages/frontend/dist /app/backend/src/side_quest_py/static
 
-# Set working directory for the application
-WORKDIR /app/backend/src
+# Copy entrypoint script
+COPY entrypoint.sh /app/
+RUN chmod +x /app/entrypoint.sh
 
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+# Set working directory for the application
+WORKDIR /app
+
+# Use the entrypoint script
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 EXPOSE 5000

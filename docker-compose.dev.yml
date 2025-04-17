@@ -12,6 +12,7 @@ services:
             - FLASK_ENV=development
             - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
             - DATABASE_URL=sqlite:///instance/side_quest_dev.db
+            - SEED_DB=${SEED_DB:-true}
         volumes:
             # Mount source code for hot-reloading
             - ./packages/backend/src:/app/backend/src
