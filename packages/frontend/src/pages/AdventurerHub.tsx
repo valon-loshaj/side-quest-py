@@ -4,6 +4,9 @@ import { useAdventurer } from '../store/hooks/useAdventurer';
 import { useAppSelector } from '../store';
 import styles from '../styles/pages/AdventurerHub.module.css';
 
+const adventurerTypes = ['Amazon', 'Sorceress', 'Paladan', 'Barbarian'] as const;
+type AdventurerType = (typeof adventurerTypes)[number];
+
 const AdventurerHub: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -18,6 +21,7 @@ const AdventurerHub: React.FC = () => {
 
     const { user } = useAppSelector(state => state.auth);
     const [adventurerName, setAdventurerName] = useState('');
+    const [adventurerType, setAdventurerType] = useState<AdventurerType>('Amazon');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const isCreating = id === 'new';
@@ -71,6 +75,18 @@ const AdventurerHub: React.FC = () => {
             typeof currentAdventurer.name === 'string'
         ) {
             setAdventurerName(currentAdventurer.name);
+
+            // Set adventurer type if available, default to Amazon if not
+            if (
+                currentAdventurer.adventurer_type &&
+                adventurerTypes.includes(
+                    currentAdventurer.adventurer_type as AdventurerType
+                )
+            ) {
+                setAdventurerType(currentAdventurer.adventurer_type as AdventurerType);
+            } else {
+                setAdventurerType('Amazon');
+            }
         }
     }, [currentAdventurer, isCreating]);
 
@@ -88,11 +104,12 @@ const AdventurerHub: React.FC = () => {
             }
 
             console.log(
-                '[AdventurerHub] Creating new adventurer with name and userId:',
+                '[AdventurerHub] Creating new adventurer with name, type and userId:',
                 adventurerName,
+                adventurerType,
                 user.id
             );
-            await createNewAdventurer(adventurerName, user.id);
+            await createNewAdventurer(adventurerName, user.id, adventurerType);
             navigate('/dashboard');
         } catch (err) {
             setError(typeof err === 'string' ? err : 'Failed to create adventurer');
@@ -125,6 +142,13 @@ const AdventurerHub: React.FC = () => {
             {isCreating ? (
                 <div className={styles.createAdventurer}>
                     <h1>Create New Adventurer</h1>
+                    <div className={styles.avatarPreview}>
+                        <img
+                            src={`/images/${adventurerType.toLowerCase()}.png`}
+                            alt={`${adventurerType} avatar`}
+                            className={styles.avatarImage}
+                        />
+                    </div>
                     <form onSubmit={handleCreateAdventurer}>
                         <div className={styles.formGroup}>
                             <label htmlFor="adventurerName">Adventurer Name</label>
@@ -137,6 +161,23 @@ const AdventurerHub: React.FC = () => {
                                 required
                             />
                         </div>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="adventurerType">Adventurer Type</label>
+                            <select
+                                id="adventurerType"
+                                value={adventurerType}
+                                onChange={e =>
+                                    setAdventurerType(e.target.value as AdventurerType)
+                                }
+                                required
+                            >
+                                {adventurerTypes.map(type => (
+                                    <option key={type} value={type}>
+                                        {type}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <button
                             type="submit"
                             className={styles.createButton}
@@ -148,7 +189,21 @@ const AdventurerHub: React.FC = () => {
                 </div>
             ) : isValidAdventurer ? (
                 <div className={styles.adventurerDetails}>
-                    <h1>{currentAdventurer.name}</h1>
+                    <div className={styles.avatarNameContainer}>
+                        <div className={styles.avatarPreview}>
+                            <img
+                                src={`/images/${(currentAdventurer.adventurer_type || adventurerType).toLowerCase()}.png`}
+                                alt={`${currentAdventurer.adventurer_type || adventurerType} avatar`}
+                                className={styles.avatarImage}
+                            />
+                        </div>
+                        <div className={styles.nameTypeContainer}>
+                            <h1>{currentAdventurer.name}</h1>
+                            <p className={styles.adventurerType}>
+                                {currentAdventurer.adventurer_type || adventurerType}
+                            </p>
+                        </div>
+                    </div>
                     <div className={styles.adventurerInfo}>
                         <p>Level: {currentAdventurer.level || 1}</p>
                         <p>Experience: {currentAdventurer.experience || 0}</p>

@@ -21,9 +21,14 @@ export const useAdventurer = () => {
     }, [dispatch]);
 
     const createNewAdventurer = useCallback(
-        (name: string, userId: string) => {
-            console.log('Creating new adventurer with name and userId:', name, userId);
-            return dispatch(createAdventurer({ name, userId }));
+        (name: string, userId: string, adventurer_type: string = 'Amazon') => {
+            console.log(
+                'Creating new adventurer with name, type and userId:',
+                name,
+                adventurer_type,
+                userId
+            );
+            return dispatch(createAdventurer({ name, userId, adventurer_type }));
         },
         [dispatch]
     );

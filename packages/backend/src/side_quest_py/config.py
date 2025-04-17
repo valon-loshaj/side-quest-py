@@ -11,14 +11,20 @@ class Config:
     # SQLAlchemy
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Default database path is in instance folder
-    _INSTANCE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "instance"))
+    # Default database path is in backend instance folder
+    # Get the absolute path to the backend package directly
+    _BACKEND_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    _INSTANCE_PATH = os.path.join(_BACKEND_PATH, "instance")
+
+    # Ensure instance directory exists
+    os.makedirs(_INSTANCE_PATH, exist_ok=True)
 
 
 class DevelopmentConfig(Config):
     """Development configuration."""
 
     DEBUG = True
+    # Use explicit absolute path to avoid any confusion
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL", f"sqlite:///{os.path.join(Config._INSTANCE_PATH, 'side_quest_dev.db')}"
     )
@@ -28,7 +34,7 @@ class TestingConfig(Config):
     """Testing configuration."""
 
     TESTING = True
-    # Use in-memory database for testing by default
+    # Use explicit absolute path to avoid any confusion
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "TEST_DATABASE_URL", f"sqlite:///{os.path.join(Config._INSTANCE_PATH, 'side_quest_test.db')}"
     )
@@ -40,8 +46,7 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production configuration."""
 
-    # Production database can be set via environment variable
-    # Default to SQLite but consider PostgreSQL or MySQL for production
+    # Use explicit absolute path to avoid any confusion
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL", f"sqlite:///{os.path.join(Config._INSTANCE_PATH, 'side_quest.db')}"
     )
