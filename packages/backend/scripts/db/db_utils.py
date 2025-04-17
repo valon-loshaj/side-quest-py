@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 # Import the SQLAlchemy instance directly
-from . import db
+from ...src.side_quest_py import db
 
 
 def init_db(app: Optional[Flask] = None) -> None:
@@ -83,7 +83,7 @@ def seed_db(app: Optional[Flask] = None) -> None:
         app = current_app
 
     try:
-        from .models.db_models import User
+        from ...src.side_quest_py.models.db_models import User
 
         # Check if we already have users
         if User.query.count() > 0:
@@ -140,7 +140,7 @@ def get_db_status(app: Optional[Flask] = None) -> dict:
     try:
         db.session.execute(text("SELECT 1"))
         status = "connected"
-    except (SQLAlchemyError) as e:
+    except SQLAlchemyError as e:
         status = f"error: {str(e)}"
 
     return {"status": status, "uri": uri, "track_modifications": track_modifications, "env": env}

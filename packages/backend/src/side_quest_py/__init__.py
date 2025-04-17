@@ -79,7 +79,7 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     # Add health check endpoint
     @app.route("/health")
     def health_check():
-        from src.side_quest_py.db_utils import get_db_status  # noqa: E402
+        from scripts.db.db_utils import get_db_status  # noqa: E402
 
         status = get_db_status()
         return {
@@ -110,7 +110,7 @@ def register_cli_commands(app: Flask) -> None:
     @app.cli.command("db-status")
     def db_status_command():
         """Show database connection status."""
-        from src.side_quest_py.db_utils import get_db_status  # noqa: E402
+        from scripts.db.db_utils import get_db_status  # noqa: E402
 
         status = get_db_status(app)
 
