@@ -6,34 +6,43 @@ This script initializes the database and creates all tables.
 import os
 import sys
 import sqlite3
-from pathlib import Path
 
 import click
 from flask import Flask
 from flask.cli import with_appcontext
+from dotenv import load_dotenv
 
-# We'll import models later after setting up Flask app
+# Load environment variables from .env file
+load_dotenv()
 
 
 def init_database() -> None:
     """Initialize the database with all tables.
 
-    This uses a custom approach to bypass configuration issues.
+    This uses the DATABASE_URL from environment variables.
     """
     # Get the environment from environment variable, default to development
     env = os.environ.get("FLASK_ENV", "development")
     print(f"Environment: {env}")
 
-    # Use ~/.side_quest_py directory for database
-    home_dir = str(Path.home())
-    db_dir = os.path.join(home_dir, ".side_quest_py")
-    os.makedirs(db_dir, exist_ok=True)
-    print(f"Database directory: {db_dir}")
+    # Get database URL from environment, or use a default as fallback
+    database_url = os.environ.get("DATABASE_URL")
+    print(f"DATABASE_URL: {database_url}")
+    if not database_url:
+        raise ValueError("DATABASE_URL is not set")
+    else:
+        print(f"Using DATABASE_URL from environment: {database_url}")
 
-    # Create database file path
-    db_file = f"side_quest_{env}.db"
-    db_path = os.path.join(db_dir, db_file)
-    print(f"Database path: {db_path}")
+    # Extract the file path from the SQLite URL
+    if database_url.startswith("sqlite:///"):
+        db_path = database_url.replace("sqlite:///", "")
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        print(f"Database path: {db_path}")
+    else:
+        print(f"Warning: Non-SQLite database URL detected: {database_url}")
+        print("This script is designed for SQLite databases.")
+        sys.exit(1)
 
     # Remove if exists
     if os.path.exists(db_path):
@@ -58,7 +67,7 @@ def init_database() -> None:
 
     # Use a clean Flask app with direct configuration
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Import database and models

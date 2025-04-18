@@ -48,16 +48,36 @@ python -m packages.backend.scripts.db.seed_db
 
 ## Database Configuration
 
-The database configuration is defined in `packages/backend/src/side_quest_py/config.py`. The default configuration uses SQLite databases stored in the `instance` directory:
+The database configuration is defined in `packages/backend/src/side_quest_py/config.py`. The default configuration uses SQLite databases stored in the `instance` directory within the backend package:
 
-- Development: `side_quest_dev.db`
-- Testing: `side_quest_test.db`
-- Production: `side_quest.db`
+- Development: `instance/side_quest_dev.db`
+- Testing: `instance/side_quest_test.db`
+- Production: `instance/side_quest.db`
+
+The instance directory is automatically created during application initialization but can be manually created with:
+
+```bash
+# Ensure instance directory exists
+mkdir -p instance
+```
+
+The database path is configured in `config.py` to use the instance directory:
+
+```python
+INSTANCE_PATH = os.path.join(_BACKEND_PATH, "instance")
+SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'side_quest_dev.db')}"
+```
 
 You can override these settings by setting the appropriate environment variables:
 
 - `DATABASE_URL`: For development and production
 - `TEST_DATABASE_URL`: For testing
+
+For example, in your `.env` file:
+
+```
+DATABASE_URL=sqlite:///${PWD}/instance/side_quest_dev.db
+```
 
 ## Migration Support
 

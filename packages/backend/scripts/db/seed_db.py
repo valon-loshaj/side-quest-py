@@ -11,6 +11,10 @@ import click
 from flask import Flask
 from flask.cli import with_appcontext
 from sqlalchemy.exc import SQLAlchemyError
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from src.side_quest_py import create_app, db
 from src.side_quest_py.config import config
@@ -49,18 +53,22 @@ def seed_database(app: Optional[Flask] = None) -> None:
     # Ensure instance directory exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Fix the database path to be within the backend instance folder
-    backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    instance_path = os.path.join(backend_path, "instance")
-    db_file = (
-        "side_quest_dev.db" if env == "development" else ("side_quest_test.db" if env == "testing" else "side_quest.db")
-    )
-    db_path = os.path.join(instance_path, db_file)
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+    # Get database URL from environment
+    database_url = os.environ.get("DATABASE_URL")
 
-    # Ensure the database directory exists
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    logging.info(f"Using database path: {db_path}")
+    if database_url:
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+        logging.info(f"Using DATABASE_URL from environment: {database_url}")
+
+        # Extract the file path if it's a SQLite database
+        if database_url.startswith("sqlite:///"):
+            db_path = database_url.replace("sqlite:///", "")
+            # Ensure the database directory exists
+            os.makedirs(os.path.dirname(db_path), exist_ok=True)
+            logging.info(f"Using database path: {db_path}")
+    else:
+        # Use default configuration from config object
+        logging.info(f"Using database URL from configuration: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     with app.app_context():
         try:
