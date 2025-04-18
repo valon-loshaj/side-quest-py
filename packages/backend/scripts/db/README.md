@@ -48,24 +48,18 @@ python -m packages.backend.scripts.db.seed_db
 
 ## Database Configuration
 
-The database configuration is defined in `packages/backend/src/side_quest_py/config.py`. The default configuration uses SQLite databases stored in the `instance` directory within the backend package:
+The database configuration is defined in `packages/backend/src/side_quest_py/config.py`. The application uses MariaDB as the database backend with the following default configurations:
 
-- Development: `instance/side_quest_dev.db`
-- Testing: `instance/side_quest_test.db`
-- Production: `instance/side_quest.db`
+- Development: `side_quest_dev` database
+- Testing: `side_quest_test` database
+- Production: `side_quest` database
 
-The instance directory is automatically created during application initialization but can be manually created with:
-
-```bash
-# Ensure instance directory exists
-mkdir -p instance
-```
-
-The database path is configured in `config.py` to use the instance directory:
+The database connection is configured in `config.py` using the DATABASE_URL environment variable:
 
 ```python
-INSTANCE_PATH = os.path.join(_BACKEND_PATH, "instance")
-SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_PATH, 'side_quest_dev.db')}"
+SQLALCHEMY_DATABASE_URI = os.environ.get(
+    "DATABASE_URL", "mysql+pymysql://side_quest_admin:your_secure_password@localhost/side_quest_dev"
+)
 ```
 
 You can override these settings by setting the appropriate environment variables:
@@ -76,7 +70,7 @@ You can override these settings by setting the appropriate environment variables
 For example, in your `.env` file:
 
 ```
-DATABASE_URL=sqlite:///${PWD}/instance/side_quest_dev.db
+DATABASE_URL=mysql+pymysql://side_quest_admin:your_secure_password@localhost/side_quest_dev
 ```
 
 ## Migration Support
