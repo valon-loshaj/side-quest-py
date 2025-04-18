@@ -13,6 +13,10 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.side_quest_py.config import config as config_dict, Config
+
+INSTANCE_PATH = Config.INSTANCE_PATH
+
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
 migrate = Migrate()
@@ -27,20 +31,16 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     Returns:
         Flask: Configured Flask application instance
     """
-    # Get environment, default to development if not specified
-    env = os.environ.get("FLASK_ENV", "development")
-
-    # Import config classes
-    from src.side_quest_py.config import config as config_dict  # noqa: E402
-
-    # Set the instance path to the backend/instance directory
-    instance_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "instance"))
+    # Get environment, throw an error if it's not set
+    env = os.environ.get("FLASK_ENV")
+    if not env:
+        raise ValueError("FLASK_ENV is not set")
 
     # Ensure the instance directory exists
-    os.makedirs(instance_path, exist_ok=True)
+    os.makedirs(INSTANCE_PATH, exist_ok=True)
 
     # Create Flask app with custom instance path
-    app = Flask(__name__, instance_path=instance_path)
+    app = Flask(__name__, instance_path=INSTANCE_PATH)
 
     # Apply configuration
     app.config.from_object(config_dict[env])
@@ -60,10 +60,10 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     register_cli_commands(app)
 
     # Import blueprints
-    from src.side_quest_py.routes.adventurer_routes import adventurer_bp  # noqa: E402
-    from src.side_quest_py.routes.auth_routes import auth_bp  # noqa: E402
-    from src.side_quest_py.routes.quest_routes import quest_bp  # noqa: E402
-    from src.side_quest_py.routes.user_routes import user_bp  # noqa: E402
+    from src.side_quest_py.routes.adventurer_routes import adventurer_bp
+    from src.side_quest_py.routes.auth_routes import auth_bp
+    from src.side_quest_py.routes.quest_routes import quest_bp
+    from src.side_quest_py.routes.user_routes import user_bp
 
     # Register blueprints
     app.register_blueprint(adventurer_bp, url_prefix="/api/v1")
@@ -79,9 +79,9 @@ def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
     # Add health check endpoint
     @app.route("/health")
     def health_check():
-        from scripts.db.db_utils import get_db_status  # noqa: E402
+        from scripts.db.db_utils import get_db_status
 
-        status = get_db_status()
+        status = get_db_status(current_app)
         return {
             "status": "healthy" if status["status"] == "connected" else "unhealthy",
             "db": status,
@@ -110,7 +110,7 @@ def register_cli_commands(app: Flask) -> None:
     @app.cli.command("db-status")
     def db_status_command():
         """Show database connection status."""
-        from scripts.db.db_utils import get_db_status  # noqa: E402
+        from scripts.db.db_utils import get_db_status
 
         status = get_db_status(app)
 

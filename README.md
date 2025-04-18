@@ -38,8 +38,27 @@ pip install -r requirements-dev.txt
 # Install the package in development mode
 pip install -e .
 
+# Create .env file with necessary environment variables
+cat > .env << EOL
+FLASK_APP=src.wsgi
+FLASK_ENV=development
+SECRET_KEY=your_development_secret_key
+DATABASE_URL=sqlite:///${PWD}/instance/side_quest_dev.db
+FLASK_DEBUG=True
+PYTHONPATH=${PYTHONPATH}:$(cd ../../ && pwd):${PWD}:${PWD}/src
+EOL
+
+# Ensure instance directory exists
+mkdir -p instance
+
 # Initialize the database
 flask --app src.wsgi:app init-db
+
+# Seed the database with sample data (optional)
+flask --app src.wsgi:app seed-db
+
+# Check database status to verify setup
+flask --app src.wsgi:app db-status
 
 # Run the development server
 flask --app src.wsgi:app run --debug
