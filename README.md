@@ -43,7 +43,7 @@ cat > .env << EOL
 FLASK_APP=src.wsgi
 FLASK_ENV=development
 SECRET_KEY=your_development_secret_key
-DATABASE_URL=sqlite:///${PWD}/instance/side_quest_dev.db
+DATABASE_URL=mysql+pymysql://side_quest_admin:your_secure_password@localhost/side_quest_dev
 FLASK_DEBUG=True
 PYTHONPATH=${PYTHONPATH}:$(cd ../../ && pwd):${PWD}:${PWD}/src
 EOL
@@ -152,7 +152,7 @@ For production, set these environment variables:
 ```bash
 FLASK_ENV=production
 SECRET_KEY=<your-secure-production-key>
-DATABASE_URL=<your-production-database-url>
+DATABASE_URL=mysql+pymysql://<username>:<password>@<host>/<database>
 ```
 
 For more advanced database setups, uncomment the database service in `docker-compose.yml`.

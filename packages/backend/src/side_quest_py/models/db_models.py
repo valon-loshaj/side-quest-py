@@ -1,10 +1,31 @@
+"""
+This module contains the SQLAlchemy models for the Side Quest application.
+"""
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-# Import db from the Flask application
-from .. import db
+from src.side_quest_py.database import Base
+
+
+class User(Base):  # type: ignore
+    """SQLAlchemy model for users"""
+
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True)
+    username = Column(String(100), nullable=False, unique=True)
+    email = Column(String(100), nullable=False, unique=True)
+    password_hash = Column(String(128), nullable=False)
+    auth_token = Column(String(128), nullable=True)
+    token_expiry = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    # Relationship with adventurers
+    adventurers = relationship("Adventurer", back_populates="user")
 
 
 class Adventurer(db.Model):  # type: ignore
@@ -62,21 +83,3 @@ class QuestCompletion(db.Model):  # type: ignore
     # Relationships
     adventurer = relationship("Adventurer", back_populates="completed_quests")
     quest = relationship("Quest", back_populates="completions")
-
-
-class User(db.Model):  # type: ignore
-    """SQLAlchemy model for users"""
-
-    __tablename__ = "users"
-
-    id = Column(String(36), primary_key=True)
-    username = Column(String(100), nullable=False, unique=True)
-    email = Column(String(100), nullable=False, unique=True)
-    password_hash = Column(String(128), nullable=False)
-    auth_token = Column(String(128), nullable=True)
-    token_expiry = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    # Relationship with adventurers
-    adventurers = relationship("Adventurer", back_populates="user")
