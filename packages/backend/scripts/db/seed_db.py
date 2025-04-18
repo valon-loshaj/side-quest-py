@@ -50,25 +50,12 @@ def seed_database(app: Optional[Flask] = None) -> None:
         app = create_app()
         app.config.from_object(config[env])
 
-    # Ensure instance directory exists
-    os.makedirs(app.instance_path, exist_ok=True)
-
     # Get database URL from environment
     database_url = os.environ.get("DATABASE_URL")
 
     if database_url:
         app.config["SQLALCHEMY_DATABASE_URI"] = database_url
         logging.info(f"Using DATABASE_URL from environment: {database_url}")
-
-        # Extract the file path if it's a SQLite database
-        if database_url.startswith("sqlite:///"):
-            db_path = database_url.replace("sqlite:///", "")
-            # Ensure the database directory exists
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)
-            logging.info(f"Using database path: {db_path}")
-    else:
-        # Use default configuration from config object
-        logging.info(f"Using database URL from configuration: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     with app.app_context():
         try:

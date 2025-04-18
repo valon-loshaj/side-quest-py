@@ -1,3 +1,9 @@
+"""Configuration for the Side Quest application.
+
+Raises:
+    ValueError: If the DATABASE_URL is not set.
+"""
+
 import os
 from typing import Any, Dict
 
@@ -30,9 +36,8 @@ class DevelopmentConfig(Config):
     """Development configuration."""
 
     DEBUG = True
-    # Use explicit absolute path to avoid any confusion
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", f"sqlite:///{os.path.join(Config.INSTANCE_PATH, 'side_quest_dev.db')}"
+        "DATABASE_URL", "mysql+pymysql://side_quest_admin:your_secure_password@localhost/side_quest_dev"
     )
     if not SQLALCHEMY_DATABASE_URI:
         raise ValueError("DATABASE_URL is not set")
@@ -42,10 +47,12 @@ class TestingConfig(Config):
     """Testing configuration."""
 
     TESTING = True
-    # Use explicit absolute path to avoid any confusion
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "TEST_DATABASE_URL", f"sqlite:///{os.path.join(Config.INSTANCE_PATH, 'side_quest_test.db')}"
+        "DATABASE_URL", "mysql+pymysql://side_quest_admin:your_secure_password@localhost/side_quest_test"
     )
+
+    if not SQLALCHEMY_DATABASE_URI:
+        raise ValueError("DATABASE_URL is not set")
 
     # Disable CSRF protection in testing
     WTF_CSRF_ENABLED = False
@@ -54,10 +61,12 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production configuration."""
 
-    # Use explicit absolute path to avoid any confusion
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", f"sqlite:///{os.path.join(Config.INSTANCE_PATH, 'side_quest.db')}"
+        "DATABASE_URL", "mysql+pymysql://side_quest_admin:your_secure_password@localhost/side_quest_prod"
     )
+
+    if not SQLALCHEMY_DATABASE_URI:
+        raise ValueError("DATABASE_URL is not set")
 
     # Production should use a strong secret key
     SECRET_KEY = os.environ.get("SECRET_KEY")  # type: ignore
