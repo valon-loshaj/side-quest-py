@@ -12,3 +12,5 @@ mypy==1.8.0
 gunicorn==21.2.0
 bcrypt>=4.3.0
 PyJWT>=2.6.0
+pymysql>=1.0.2
+cryptography>=36.0.0

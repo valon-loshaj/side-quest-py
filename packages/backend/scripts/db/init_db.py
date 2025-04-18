@@ -5,12 +5,13 @@ This script initializes the database and creates all tables.
 
 import os
 import sys
-import sqlite3
 
 import click
 from flask import Flask
 from flask.cli import with_appcontext
 from dotenv import load_dotenv
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,38 +34,6 @@ def init_database() -> None:
     else:
         print(f"Using DATABASE_URL from environment: {database_url}")
 
-    # Extract the file path from the SQLite URL
-    if database_url.startswith("sqlite:///"):
-        db_path = database_url.replace("sqlite:///", "")
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        print(f"Database path: {db_path}")
-    else:
-        print(f"Warning: Non-SQLite database URL detected: {database_url}")
-        print("This script is designed for SQLite databases.")
-        sys.exit(1)
-
-    # Remove if exists
-    if os.path.exists(db_path):
-        try:
-            os.remove(db_path)
-            print(f"Removed existing database at {db_path}")
-        except Exception as e:
-            print(f"Warning: Could not remove existing database: {e}")
-
-    # First test direct SQLite access
-    try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("CREATE TABLE test_access (id INTEGER PRIMARY KEY)")
-        cursor.close()
-        conn.close()
-        print("✅ Direct SQLite access works")
-        os.remove(db_path)  # Remove test table for clean slate
-    except Exception as e:
-        print(f"❌ Direct SQLite test failed: {e}")
-        sys.exit(1)
-
     # Use a clean Flask app with direct configuration
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
@@ -81,6 +50,13 @@ def init_database() -> None:
 
     with app.app_context():
         try:
+            # Test database connection first
+            connection = db.engine.connect()
+            result = connection.execute(text("SELECT 1"))
+            connection.close()
+            print("✅ Database connection successful")
+
+            # Now create all tables
             db.create_all()
             print("\n✅ Database initialized successfully")
 
@@ -91,13 +67,11 @@ def init_database() -> None:
             tables = inspector.get_table_names()
             print(f"Tables created: {tables}")
 
-            # Print database location for reference
-            print(f"\nDatabase created at: {db_path}")
-            print(f"You can set this in your .env file with:")
-            print(f"DATABASE_URL=sqlite:///{db_path}")
-
-        except Exception as e:
+        except SQLAlchemyError as e:
             print(f"❌ Error initializing database: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
             sys.exit(1)
 
 

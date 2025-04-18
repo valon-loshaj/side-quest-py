@@ -5,6 +5,7 @@ It initializes the Flask application, configures extensions, and sets up routes.
 """
 
 import os
+import pymysql
 from typing import Optional, Union
 
 from flask import Flask, current_app
@@ -20,6 +21,7 @@ INSTANCE_PATH = Config.INSTANCE_PATH
 # Initialize SQLAlchemy instance at module level
 db = SQLAlchemy()
 migrate = Migrate()
+pymysql.install_as_MySQLdb()
 
 
 def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
@@ -101,11 +103,13 @@ def register_cli_commands(app: Flask) -> None:
     from scripts.db.init_db import init_db_command as init_db
     from scripts.db.reset_db import reset_db_command as reset_db
     from scripts.db.seed_db import seed_db_command as seed_db
+    from scripts.db.migrate_db import migrate_db_command as migrate_db
 
     # Register the commands with the application
     app.cli.add_command(init_db)
     app.cli.add_command(reset_db)
     app.cli.add_command(seed_db)
+    app.cli.add_command(migrate_db)
 
     @app.cli.command("db-status")
     def db_status_command():
