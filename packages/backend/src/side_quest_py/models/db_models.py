@@ -28,7 +28,7 @@ class User(Base):  # type: ignore
     adventurers = relationship("Adventurer", back_populates="user")
 
 
-class Adventurer(db.Model):  # type: ignore
+class Adventurer(Base):  # type: ignore
     """SQLAlchemy model for adventurers"""
 
     __tablename__ = "adventurers"
@@ -52,7 +52,7 @@ class Adventurer(db.Model):  # type: ignore
     user = relationship("User", back_populates="adventurers")
 
 
-class Quest(db.Model):  # type: ignore
+class Quest(Base):  # type: ignore
     """SQLAlchemy model for quests"""
 
     __tablename__ = "quests"
@@ -69,7 +69,7 @@ class Quest(db.Model):  # type: ignore
     completions = relationship("QuestCompletion", back_populates="quest")
 
 
-class QuestCompletion(db.Model):  # type: ignore
+class QuestCompletion(Base):  # type: ignore
     """SQLAlchemy model for tracking quest completions by adventurers"""
 
     __tablename__ = "quest_completions"

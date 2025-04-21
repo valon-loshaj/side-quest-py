@@ -1,53 +1,52 @@
-from datetime import datetime
-from typing import Optional, Tuple
-import os
+"""
+This module contains the authentication service for the Side Quest application.
+"""
 
-import bcrypt
-from flask import current_app
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
 
-from .. import db
-from ..models.db_models import User
-from ..models.user import AuthenticationError, UserNotFoundError
-from ..services.user_service import UserService
+from fastapi import Depends, HTTPException, status
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+from ulid import ULID
+
+from src.side_quest_py.database import get_db
+from src.side_quest_py.models.db_models import User
+from src.side_quest_py.api.config import settings
+from src.side_quest_py.api.schemas.auth import TokenData
+
+# JWT configuration
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthService:
     """Service for handling authentication-related operations."""
 
-    def __init__(self, user_service: Optional[UserService] = None) -> None:
-        """Initialize the auth service with a user service."""
-        self.user_service = user_service if user_service else UserService()
+    def __init__(self, db: Session = Depends(get_db)):
+        """Initialize the auth service with a database session."""
+        self.db = db
 
-    def hash_password(self, password: str) -> str:
-        """
-        Hash a password using bcrypt.
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify a password against a hashed password."""
+        return pwd_context.verify(plain_password, hashed_password)
 
-        Args:
-            password: The plain text password to hash
+    def get_password_hash(self, password: str) -> str:
+        """Hash a password using bcrypt."""
+        return pwd_context.hash(password)
 
-        Returns:
-            str: The hashed password
-        """
-        # Generate a salt and hash the password
-        password_bytes = password.encode("utf-8")
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password_bytes, salt)
-        return hashed.decode("utf-8")
+    def get_user_by_username(self, username: str) -> Optional[User]:
+        """Get a user by username."""
+        return self.db.query(User).filter(User.username == username).first()
 
-    def check_password(self, plain_password: str, hashed_password: str) -> bool:
-        """
-        Check if a plain text password matches the hashed version.
-
-        Args:
-            plain_password: The plain text password to check
-            hashed_password: The hashed password to compare against
-
-        Returns:
-            bool: True if the passwords match, False otherwise
-        """
-        password_bytes = plain_password.encode("utf-8")
-        hashed_bytes = hashed_password.encode("utf-8")
-        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get a user by email."""
+        return self.db.query(User).filter(User.email == email).first()
 
     def register_user(self, username: str, email: str, password: str) -> User:
         """
@@ -60,16 +59,39 @@ class AuthService:
 
         Returns:
             User: The newly created user object
-        """
-        try:
-            # Create the user with the password
-            user = self.user_service.create_user(username, email, password)
-            return user
-        except Exception as e:
-            db.session.rollback()
-            raise AuthenticationError(f"Error registering user: {str(e)}") from e
 
-    def authenticate(self, username: str, password: str) -> Tuple[User, str]:
+        Raises:
+            HTTPException: If registration fails
+        """
+        if self.get_user_by_username(username):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+
+        if self.get_user_by_email(email):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
+        try:
+            hashed_password = self.get_password_hash(password)
+            new_user = User(
+                id=str(ULID()),
+                username=username,
+                email=email,
+                password_hash=hashed_password,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            )
+
+            self.db.add(new_user)
+            self.db.commit()
+            self.db.refresh(new_user)
+            return new_user
+
+        except Exception as exc:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to register user: {str(exc)}"
+            ) from exc
+
+    def authenticate_user(self, username: str, password: str) -> str:
         """
         Authenticate a user with their username and password.
 
@@ -78,179 +100,92 @@ class AuthService:
             password: The plain text password of the user
 
         Returns:
-            Tuple[User, str]: The authenticated user and their new auth token
+            str: The access token for the authenticated user
 
         Raises:
-            AuthenticationError: If the authentication fails
+            HTTPException: If authentication fails
         """
-        try:
-            # Use the user_service to authenticate
-            user = self.user_service.authenticate_user(username, password)
-
-            # Return the user and their token
-            if not user.auth_token:  # type: ignore
-                raise AuthenticationError("Failed to generate auth token")
-
-            return user, user.auth_token  # type: ignore
-        except UserNotFoundError as user_not_found_error:
-            raise AuthenticationError("Invalid username or password") from user_not_found_error
-        except Exception as e:
-            raise AuthenticationError(f"Authentication failed: {str(e)}") from e
-
-    def validate_token(self, token: str) -> Optional[User]:
-        """
-        Validate an authentication token and return the associated user.
-
-        Args:
-            token: The authentication token to validate
-
-        Returns:
-            Optional[User]: The user associated with the token if valid, None otherwise
-        """
-        try:
-            # Check if token has valid JWT format
-            parts = token.split(".")
-            if len(parts) != 3:
-                return None
-
-            # Try direct JWT validation first - if it fails, we can skip the database lookup
-            try:
-                from .user_service import JWT_SECRET_KEY_FALLBACK
-                import jwt
-
-                # Get secret key
-                secret_key = (
-                    current_app.config.get("SECRET_KEY")
-                    if current_app and current_app.config.get("SECRET_KEY")
-                    else os.environ.get("SECRET_KEY", JWT_SECRET_KEY_FALLBACK)
-                )
-
-                # Now do actual validation
-                jwt.decode(
-                    token,
-                    secret_key,
-                    algorithms=["HS256"],
-                    options={
-                        "verify_signature": True,
-                        "verify_exp": True,
-                        "verify_iat": False,  # Disable iat verification to avoid clock skew issues
-                        "leeway": 600,  # 10-minute leeway for clock skew
-                    },
-                )
-            except jwt.ExpiredSignatureError:
-                return None
-            except jwt.InvalidTokenError:
-                return None
-            except (TypeError, ValueError) as e:
-                raise AuthenticationError(f"Invalid token: {str(e)}") from e
-
-            # Find the user with this token
-            user = self.user_service.get_user_by_token(token)
-
-            # If no user found with this token
-            if not user:
-                return None
-
-            # Check database expiry
-            token_expiry = user.token_expiry
-            if token_expiry is None or token_expiry < datetime.now():  # type: ignore
-                return None
-
-            return user
-        except Exception as e:
-            raise AuthenticationError(f"Invalid token: {str(e)}") from e
-
-    def logout(self, user_id: str) -> None:
-        """
-        Logout a user by invalidating their authentication token.
-
-        Args:
-            user_id: The ID of the user to logout
-        """
-        try:
-            self.user_service.invalidate_token(user_id)
-        except UserNotFoundError as e:
-            raise e
-        except Exception as e:
-            raise AuthenticationError(f"Logout failed: {str(e)}") from e
-
-    def _is_token_valid(self, user: User) -> bool:
-        """Check if the user's token is valid and not expired."""
-        try:
-            if user.auth_token is None:
-                return False
-
-            # Import jwt from user_service
-            from .user_service import jwt, JWT_SECRET_KEY_FALLBACK
-
-            # Cast the auth_token to string to ensure compatibility with jwt.decode
-            token_str = str(user.auth_token)
-
-            # Get the secret key from Flask config if available
-            secret_key = (
-                current_app.config.get("SECRET_KEY")
-                if current_app and current_app.config.get("SECRET_KEY")
-                else os.environ.get("SECRET_KEY", JWT_SECRET_KEY_FALLBACK)
+        user = self.get_user_by_username(username)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
-            # Log token parts
-            parts = token_str.split(".")
+        if not self.verify_password(password, str(user.password_hash)):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-            if len(parts) != 3:
-                return False
+        # Create access token
+        access_token = self.create_access_token(data={"sub": user.username})
 
-            try:
-                # Decode and verify the token with clock skew tolerance
-                payload = jwt.decode(
-                    token_str,
-                    secret_key,
-                    algorithms=["HS256"],
-                    options={
-                        "verify_signature": True,
-                        "verify_exp": True,
-                        "verify_iat": False,  # Disable iat verification
-                        # Allow for some clock skew (10 minutes)
-                        "leeway": 600,
-                    },
-                )
+        # Update user's token in DB
+        user.auth_token = access_token  # type: ignore
+        user.token_expiry = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)  # type: ignore
+        self.db.commit()
 
-                # Check if token has expired according to JWT claims
-                if "exp" not in payload:
-                    return False
+        return access_token
 
-                jwt_expiry = datetime.fromtimestamp(payload["exp"])
-                current_time = datetime.now()
-                jwt_valid = jwt_expiry > current_time
+    def create_access_token(self, data: Dict[str, Any]) -> str:
+        """Create an access token with expiration."""
+        to_encode = data.copy()
+        expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        to_encode.update({"exp": expire})
 
-                if not jwt_valid:
-                    return False
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
 
-                # If token is valid according to JWT, also check the database expiry
-                token_expiry = user.token_expiry
-                if token_expiry is None:
-                    return False
+    def verify_token(self, token: str) -> Optional[User]:
+        """
+        Verify a JWT token and return the user.
 
-                # Force evaluation of the SQLAlchemy expression by comparing dates directly
-                # Convert SQLAlchemy datetime to Python datetime
-                token_expiry_dt = token_expiry
-                if hasattr(token_expiry, "replace"):  # It's a datetime object
-                    # Handle timezone if needed
-                    if token_expiry.tzinfo is not None:
-                        token_expiry_dt = token_expiry.replace(tzinfo=None)
+        Args:
+            token: The JWT token to verify
 
-                # Compare as Python datetime objects
-                db_valid = token_expiry_dt > current_time
+        Returns:
+            Optional[User]: The user if token is valid, None otherwise
+        """
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username = payload.get("sub")
+            if username is None:
+                return None
 
-                if not db_valid:  # type: ignore
-                    return False
+            token_data = TokenData(username=username)
+        except JWTError:
+            return None
 
-                # Both JWT and database validation passed
-                return True
+        user = self.get_user_by_username(username=token_data.username or "")
 
-            except jwt.ExpiredSignatureError:
-                return False
-            except jwt.InvalidTokenError:
-                return False
+        if user and hasattr(user, "token_expiry") and user.token_expiry and user.token_expiry < datetime.now():  # type: ignore
+            return None
 
-        except (TypeError, ValueError) as e:
-            raise AuthenticationError(f"Invalid token: {str(e)}") from e
+        return user
+
+    def logout_user(self, user: User) -> bool:
+        """
+        Invalidate a user's authentication token.
+
+        Args:
+            user: The user to log out
+
+        Returns:
+            bool: True if successful
+
+        Raises:
+            HTTPException: If logout fails
+        """
+        try:
+            user.auth_token = None  # type: ignore
+            user.token_expiry = None  # type: ignore
+            self.db.commit()
+            return True
+        except Exception as exc:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(exc)}"
+            ) from exc

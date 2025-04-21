@@ -1,5 +1,8 @@
 """
-This module provides a database connection and session factory for the Side Quest application.
+Database configuration for the Side Quest Py application.
+
+This module initializes the SQLAlchemy engine, session, and base model.
+It also provides the dependency to get a database session.
 """
 
 from sqlalchemy import create_engine
@@ -8,23 +11,22 @@ from sqlalchemy.orm import sessionmaker
 
 from src.side_quest_py.api.config import settings
 
-# Get database URL from settings
-DATABASE_URL = settings.DATABASE_URL
+# Database URL from settings
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# Create engine
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
-
-# Create session factory
+# Create SQLAlchemy engine
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create declarative base for models
 Base = declarative_base()
 
 
-# Dependency for getting DB session
 def get_db():
-    """Dependency for getting DB session."""
+    """
+    Dependency to get a database session.
+
+    Yields:
+        Session: SQLAlchemy session that will be automatically closed
+    """
     db = SessionLocal()
     try:
         yield db

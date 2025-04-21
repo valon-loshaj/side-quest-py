@@ -9,7 +9,10 @@ import os
 import sys
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
 
+# load environment variables
+load_dotenv()
 
 FASTAPI_ENV = os.environ.get("FASTAPI_ENV")
 if not FASTAPI_ENV:
@@ -19,6 +22,9 @@ print(f"Using environment: {FASTAPI_ENV}", file=sys.stderr)
 
 class BaseConfig(BaseSettings):
     """Base configuration for all environments."""
+
+    # Environment
+    FASTAPI_ENV: str = FASTAPI_ENV
 
     # API settings
     API_VERSION: str = "v1"
@@ -47,11 +53,11 @@ class BaseConfig(BaseSettings):
     CORS_ALLOW_METHODS: list = ["*"]
     CORS_ALLOW_HEADERS: list = ["*"]
 
+    # Debug flag
+    DEBUG: bool = False
+
     # Pydantic v2 config using model_config
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=True,
-    )
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
 
 class DevelopmentConfig(BaseConfig):
@@ -98,8 +104,10 @@ def get_settings():
     Get application settings based on environment.
     Uses lru_cache to avoid loading the settings multiple times.
     """
-    env = os.environ.get("FASTAPI_ENV", "development")
-    config_class = config_dict.get(env, DevelopmentConfig)
+    cached_env = FASTAPI_ENV
+    config_class = config_dict.get(cached_env if cached_env is not None else "development")
+    if not config_class:
+        raise ValueError(f"Invalid environment: {cached_env}")
     return config_class()
 
 

@@ -2,88 +2,120 @@
 This module contains the routes for the authentication endpoints.
 """
 
-from datetime import timedelta
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from ulid import ULID
 
-from src.side_quest_py.database import get_db
 from src.side_quest_py.api.schemas.auth import Token, UserCreate, UserResponse
-from src.side_quest_py.api.auth.jwt import (
-    get_password_hash,
-    verify_password,
-    create_access_token,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-)
-from src.side_quest_py.models.db_models import User
+from src.side_quest_py.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+async def register(user_data: UserCreate, auth_service: AuthService = Depends()):
     """
     Register a new user.
+
+    This endpoint allows users to create a new account.
+
+    Args:
+        user_data: The user data for registration
+
+    Returns:
+        The newly created user
+
+    Raises:
+        HTTPException: If username or email already exists or if registration fails
     """
     try:
-        existing_user = db.query(User).filter(User.username == user_data.username).first()
-        if existing_user:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
-
-        existing_user_email = db.query(User).filter(User.email == user_data.email).first()
-        if existing_user_email:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-
-        hashed_password = get_password_hash(user_data.password)
-        new_user = User(
-            id=str(ULID()),
-            username=user_data.username,
-            email=user_data.email,
-            password_hash=hashed_password,
+        new_user = auth_service.register_user(
+            username=user_data.username, email=user_data.email, password=user_data.password
         )
-
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
+        return new_user
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Registration failed: {str(exc)}"
+        ) from exc
 
-    return new_user
+
+@router.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), auth_service: AuthService = Depends()):
+    """
+    Authenticate a user and issue an access token.
+
+    This endpoint validates user credentials and issues a JWT token for authentication.
+
+    Args:
+        form_data: The username and password for authentication
+
+    Returns:
+        A token object containing the access token
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    try:
+        access_token = auth_service.authenticate_user(username=form_data.username, password=form_data.password)
+
+        return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login failed: {str(exc)}"
+        ) from exc
 
 
-# @router.post("/login", response_model=Token)
-# async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-#     """
-#     Login a user.
-#     """
-#     # Find user by username
-#     user = db.query(User).filter(User.username == form_data.username).first()
-#     if not user:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect username or password",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(request: Request, auth_service: AuthService = Depends()):
+    """
+    Logout a user by invalidating their authentication token.
 
-#     # Verify password
-#     if not verify_password(form_data.password, str(user.password_hash)):
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect username or password",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
+    The request must include an Authorization header with a valid Bearer token:
+    `Authorization: Bearer your_token_here`
 
-#     # Create access token
-#     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     access_token = create_access_token(jwt_payload={"sub": user.username}, expires_delta=access_token_expires)
+    Args:
+        request: The FastAPI request object
 
-#     # Update user's token in DB
-#     user.auth_token = access_token
-#     from datetime import datetime, timedelta
+    Returns:
+        A success message
 
-#     user.token_expiry = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     db.commit()
+    Raises:
+        HTTPException: If logout fails or authorization is invalid
+    """
+    try:
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing Authorization header. Please provide a Bearer token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-#     return {"access_token": access_token, "token_type": "bearer"}
+        if not auth_header.startswith("Bearer "):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Authorization header format. Use 'Bearer your_token_here'",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        token = auth_header.replace("Bearer ", "")
+
+        user = auth_service.verify_token(token)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        auth_service.logout_user(user)
+        return {"detail": "Successfully logged out"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(exc)}"
+        ) from exc
