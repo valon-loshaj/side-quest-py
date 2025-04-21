@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from src.side_quest_py.api.schemas.auth import Token, UserCreate, UserResponse
 from src.side_quest_py.services.auth_service import AuthService
+from src.side_quest_py.api.deps.auth_helpers import extract_token_from_header, verify_auth_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
@@ -73,45 +74,24 @@ async def logout(request: Request, auth_service: AuthService = Depends()):
     """
     Logout a user by invalidating their authentication token.
 
-    The request must include an Authorization header with a valid Bearer token:
-    `Authorization: Bearer your_token_here`
-
     Args:
         request: The FastAPI request object
+        auth_service: The auth service
 
     Returns:
         A success message
 
     Raises:
-        HTTPException: If logout fails or authorization is invalid
+        HTTPException: If logout fails
     """
     try:
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Missing Authorization header. Please provide a Bearer token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        auth_token = extract_token_from_header(request)
+        user = verify_auth_token(auth_token, auth_service)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
-        if not auth_header.startswith("Bearer "):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Authorization header format. Use 'Bearer your_token_here'",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        token = auth_header.replace("Bearer ", "")
-
-        user = auth_service.verify_token(token)
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        auth_service.logout_user(user)
+        current_user_id = user.id
+        auth_service.logout_user(current_user_id)
         return {"detail": "Successfully logged out"}
     except HTTPException:
         raise

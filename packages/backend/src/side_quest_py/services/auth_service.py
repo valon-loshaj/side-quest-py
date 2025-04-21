@@ -166,12 +166,12 @@ class AuthService:
 
         return user
 
-    def logout_user(self, user: User) -> bool:
+    def logout_user(self, user_id: str) -> bool:
         """
         Invalidate a user's authentication token.
 
         Args:
-            user: The user to log out
+            user_id: The ID of the user to log out
 
         Returns:
             bool: True if successful
@@ -180,10 +180,13 @@ class AuthService:
             HTTPException: If logout fails
         """
         try:
-            user.auth_token = None  # type: ignore
-            user.token_expiry = None  # type: ignore
-            self.db.commit()
-            return True
+            user = self.db.query(User).filter(User.id == user_id).first()
+            if user:
+                user.auth_token = None  # type: ignore
+                user.token_expiry = None  # type: ignore
+                self.db.commit()
+                return True
+            return False
         except Exception as exc:
             self.db.rollback()
             raise HTTPException(
