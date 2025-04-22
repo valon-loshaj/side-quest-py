@@ -1,20 +1,29 @@
 from typing import Any, Dict, List, Optional
-
-from .. import db
-from ..models.adventurer import AdventurerValidationError, LevelCalculator
-from ..models.db_models import Adventurer, QuestCompletion
+from datetime import datetime
+from fastapi import Depends
+from sqlalchemy.orm import Session
 from ulid import ULID
+
+from src.side_quest_py.database import get_db
+from src.side_quest_py.models.adventurer import (
+    AdventurerValidationError,
+    LevelCalculator,
+    AdventurerNotFoundError,
+    AdventurerDeletionError,
+)
+from src.side_quest_py.models.db_models import Adventurer
 
 
 class AdventurerService:
     """Service for handling adventurer-related operations."""
 
-    def __init__(self) -> None:
+    def __init__(self, db: Session = Depends(get_db)) -> None:
         """Initialize the adventurer service with a level calculator."""
         self.level_calculator = LevelCalculator()
+        self.db = db
 
-    def create_adventurer(
-        self, name: str, user_id: str, level: int = 1, experience: int = 0, adventurer_type: str = "default"
+    async def create_adventurer(
+        self, name: str, user_id: str, level: int = 1, experience: int = 0, adventurer_type: str = "Amazon"
     ) -> Adventurer:
         """
         Create a new adventurer.
@@ -24,7 +33,7 @@ class AdventurerService:
             user_id: The ID of the user associated with the adventurer
             level: The starting level of the adventurer (default: 1)
             experience: The starting experience of the adventurer (default: 0)
-        Returns:
+            adventurer_type: The type of adventurer to create (default: "default") Returns:
             Adventurer: The newly created adventurer
 
         Raises:
@@ -43,12 +52,6 @@ class AdventurerService:
             if not adventurer_type:
                 raise AdventurerValidationError("Adventurer type cannot be empty")
 
-            # Check if adventurer with the same name already exists
-            existing = self.get_adventurer(name)
-            if existing:
-                raise AdventurerValidationError(f"Adventurer with name '{name}' already exists")
-
-            # Create new adventurer with a generated ID
             adventurer = Adventurer(
                 id=str(ULID()),
                 name=name,
@@ -56,76 +59,81 @@ class AdventurerService:
                 experience=experience,
                 user_id=user_id,
                 adventurer_type=adventurer_type,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
             )
 
             # Add to database
-            db.session.add(adventurer)
-            db.session.commit()
+            self.db.add(adventurer)
+            self.db.commit()
 
             return adventurer
         except AdventurerValidationError as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except (TypeError, ValueError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise AdventurerValidationError(f"Error creating adventurer: {str(e)}") from e
 
-    def get_adventurer(self, name: str) -> Optional[Adventurer]:
+    async def get_adventurer_by_id(self, adventurer_id: str) -> Optional[Adventurer]:
         """
-        Get an adventurer by name.
+        Get an adventurer by ID.
 
         Args:
-            name: The name of the adventurer
+            adventurer_id: The ID of the adventurer
 
         Returns:
             Optional[Adventurer]: The adventurer if found, None otherwise
         """
-        adventurer: Optional[Adventurer] = Adventurer.query.filter_by(name=name).first()
+        adventurer: Optional[Adventurer] = self.db.query(Adventurer).filter_by(id=adventurer_id).first()
         return adventurer
 
-    def get_all_adventurers(self) -> List[Adventurer]:
+    async def get_all_adventurers(self, user_id: str) -> List[Adventurer]:
         """
-        Get all adventurers.
+        Get all adventurers for a user.
 
         Returns:
             List[Adventurer]: A list of all adventurers
         """
-        adventurers: List[Adventurer] = Adventurer.query.all()
+        adventurers: List[Adventurer] = self.db.query(Adventurer).filter_by(user_id=user_id).all()
         return adventurers
 
-    def delete_adventurer(self, name: str) -> bool:
+    async def delete_adventurer(self, adventurer_id: str) -> bool:
         """
-        Delete an adventurer by name.
+        Delete an adventurer by ID.
 
         Args:
-            name: The name of the adventurer
+            adventurer_id: The ID of the adventurer to delete
 
         Returns:
             bool: True if the adventurer was deleted, False otherwise
         """
-        adventurer = self.get_adventurer(name)
+        adventurer = await self.get_adventurer_by_id(adventurer_id)
         if adventurer:
             try:
-                db.session.delete(adventurer)
-                db.session.commit()
+                self.db.delete(adventurer)
+                self.db.commit()
                 return True
             except (TypeError, ValueError) as e:
-                db.session.rollback()
+                self.db.rollback()
                 raise AdventurerValidationError(f"Error deleting adventurer: {str(e)}") from e
+            except Exception as e:
+                self.db.rollback()
+                raise AdventurerDeletionError(f"Unexpected error deleting adventurer: {str(e)}") from e
         return False
 
-    def update_adventurer(self, name: str, **kwargs: Any) -> Optional[Adventurer]:
+    async def update_adventurer(self, adventurer_id: str, **kwargs: Any) -> Optional[Adventurer]:
         """
-        Update an adventurer's attributes.
+        Update an adventurer's attributes by ID.
 
         Args:
-            name: The name of the adventurer
+            adventurer_id: The ID of the adventurer to update
             **kwargs: Attributes to update
 
         Returns:
             Optional[Adventurer]: The updated adventurer if found, None otherwise
         """
-        adventurer = self.get_adventurer(name)
+        adventurer = self.db.query(Adventurer).filter_by(id=adventurer_id).first()
         if not adventurer:
             return None
 
@@ -134,18 +142,18 @@ class AdventurerService:
                 if hasattr(adventurer, key):
                     setattr(adventurer, key, value)
 
-            db.session.commit()
+            self.db.commit()
             return adventurer
         except (TypeError, ValueError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise AdventurerValidationError(f"Error updating adventurer: {str(e)}") from e
 
-    def gain_experience(self, adventurer_name: str, experience_gain: int) -> Optional[Adventurer]:
+    async def gain_experience(self, adventurer_id: str, experience_gain: int) -> Optional[Adventurer]:
         """
         Add experience to the adventurer and handle level up if necessary.
 
         Args:
-            adventurer_name: Name of the adventurer gaining experience
+            adventurer_id: ID of the adventurer gaining experience
             experience_gain: Amount of experience gained
 
         Returns:
@@ -157,78 +165,25 @@ class AdventurerService:
         if experience_gain < 0:
             raise AdventurerValidationError("Experience gain cannot be negative")
 
-        adventurer = self.get_adventurer(adventurer_name)
+        adventurer = await self.get_adventurer_by_id(adventurer_id)
         if not adventurer:
-            return None
+            raise AdventurerNotFoundError(f"Adventurer with ID {adventurer_id} not found")
 
         try:
+            current_experience = adventurer.experience
+            current_level = adventurer.level
             adventurer.experience += experience_gain  # type: ignore
 
-            required_exp = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
-            if adventurer.experience >= required_exp:  # type: ignore
+            required_exp = self.level_calculator.calculate_req_exp(current_level)  # type: ignore
+            if current_experience + experience_gain >= required_exp:  # type: ignore
                 adventurer.level += 1  # type: ignore
                 adventurer.experience = 0  # type: ignore
 
-            db.session.commit()
+            self.db.commit()
             return adventurer
         except (TypeError, ValueError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise AdventurerValidationError(f"Error gaining experience: {str(e)}") from e
-
-    def complete_quest(self, adventurer_name: str, quest_id: str, experience_gain: int) -> Optional[Dict[str, Any]]:
-        """
-        Process quest completion for an adventurer.
-
-        Args:
-            adventurer_name: Name of the adventurer completing the quest
-            quest_id: ID of the quest being completed
-            experience_gain: Experience gained from completing the quest
-
-        Returns:
-            Optional[Dict[str, Any]]: Result containing was_new_completion and leveled_up flags, or None if adventurer not found
-
-        Raises:
-            AdventurerValidationError: If there are validation errors with the quest completion
-        """
-        if not quest_id:
-            raise AdventurerValidationError("Quest ID cannot be empty")
-        if experience_gain < 0:
-            raise AdventurerValidationError("Experience gain cannot be negative")
-
-        adventurer = self.get_adventurer(adventurer_name)
-        if not adventurer:
-            return None
-
-        try:
-            completion = QuestCompletion.query.filter_by(adventurer_id=adventurer.id, quest_id=quest_id).first()
-
-            was_new = completion is None
-
-            if was_new:
-                new_completion = QuestCompletion(adventurer_id=adventurer.id, quest_id=quest_id)
-                db.session.add(new_completion)
-
-                old_level = adventurer.level
-
-                adventurer.experience += experience_gain  # type: ignore
-
-                required_exp = self.level_calculator.calculate_req_exp(old_level)  # type: ignore
-                leveled_up = False
-
-                if adventurer.experience >= required_exp:  # type: ignore
-                    adventurer.level += 1  # type: ignore
-                    adventurer.experience = 0  # type: ignore
-                    leveled_up = True
-
-                db.session.commit()
-
-                return {"was_new_completion": True, "leveled_up": leveled_up}
-            else:
-                return {"was_new_completion": False, "leveled_up": False}
-
-        except (TypeError, ValueError) as e:
-            db.session.rollback()
-            raise AdventurerValidationError(f"Error completing quest: {str(e)}") from e
 
     def adventurer_to_dict(self, adventurer: Adventurer) -> Dict[str, Any]:
         """
@@ -240,15 +195,16 @@ class AdventurerService:
         Returns:
             Dict[str, Any]: A dictionary representation of the adventurer
         """
-        experience_for_next_level = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
+        # experience_for_next_level = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
 
-        progress_percentage = (
-            (adventurer.experience / experience_for_next_level * 100) if experience_for_next_level > 0 else 100
-        )
+        # progress_percentage = (
+        #     (adventurer.experience / experience_for_next_level * 100) if experience_for_next_level > 0 else 100
+        # )
 
-        completed_quests = [
-            completion.quest_id for completion in QuestCompletion.query.filter_by(adventurer_id=adventurer.id).all()
-        ]
+        # completed_quests = [
+        #     completion.quest_id
+        #     for completion in self.db.query(QuestCompletion).filter_by(adventurer_id=adventurer.id).all()
+        # ]
 
         return {
             "id": adventurer.id,
@@ -256,8 +212,10 @@ class AdventurerService:
             "level": adventurer.level,
             "adventurer_type": adventurer.adventurer_type,
             "experience": adventurer.experience,
-            "experience_for_next_level": experience_for_next_level,
-            "progress_percentage": round(progress_percentage, 2),  # type: ignore
-            "completed_quests_count": len(completed_quests),
-            "completed_quests": completed_quests,
+            # "experience_for_next_level": experience_for_next_level,
+            # "progress_percentage": round(progress_percentage, 2),  # type: ignore
+            "created_at": adventurer.created_at,
+            "updated_at": adventurer.updated_at,
+            # "completed_quests_count": len(completed_quests),
+            # "completed_quests": completed_quests,
         }

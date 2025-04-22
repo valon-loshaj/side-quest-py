@@ -27,6 +27,10 @@ class AdventurerNotFoundError(Exception):
     """Raised when an adventurer is not found."""
 
 
+class AdventurerDeletionError(Exception):
+    """Exception raised when there's an error deleting an adventurer."""
+
+
 class LevelCalculator:
     """Handles the logic necessary when an adventurer levels up"""
 

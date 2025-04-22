@@ -1,129 +1,84 @@
-"""Side Quest Py - A Flask-based adventure game backend.
+"""Side Quest Py - A FastAPI-based adventure game backend.
 
 This module serves as the main entry point for the Side Quest Py application.
-It initializes the Flask application, configures extensions, and sets up routes.
+It initializes the FastAPI application, configures the database, and sets up routes.
 """
 
 import os
-import pymysql
-from typing import Optional, Union
+from typing import Dict, Any, Optional
 
-from flask import Flask, current_app
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+import pymysql
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
-from src.side_quest_py.config import config as config_dict, Config
+from src.side_quest_py.api.config import settings
+from src.side_quest_py.database import get_db
 
-INSTANCE_PATH = Config.INSTANCE_PATH
-
-# Initialize SQLAlchemy instance at module level
-db = SQLAlchemy()
-migrate = Migrate()
+# Use MySQLdb as driver for pymysql
 pymysql.install_as_MySQLdb()
 
 
-def create_app(config: Optional[Union[dict, object]] = None) -> Flask:
-    """Create and configure the Flask application.
-
-    Args:
-        config (Optional[Union[dict, object]]): Configuration dictionary or object to override defaults
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application.
 
     Returns:
-        Flask: Configured Flask application instance
+        FastAPI: Configured FastAPI application instance
     """
-    # Get environment, throw an error if it's not set
-    env = os.environ.get("FLASK_ENV")
-    if not env:
-        raise ValueError("FLASK_ENV is not set")
+    # Create FastAPI app using settings from config
+    app = FastAPI(title=settings.APP_NAME, description=settings.APP_DESCRIPTION, version=settings.APP_VERSION)
 
-    # Ensure the instance directory exists
-    os.makedirs(INSTANCE_PATH, exist_ok=True)
-
-    # Create Flask app with custom instance path
-    app = Flask(__name__, instance_path=INSTANCE_PATH)
-
-    # Apply configuration
-    app.config.from_object(config_dict[env])
-
-    # Override with any passed config values
-    if config:
-        if isinstance(config, dict):
-            app.config.update(config)
-        else:
-            app.config.from_object(config)
-
-    # Initialize extensions
-    db.init_app(app)
-    migrate.init_app(app, db)
-
-    # Register CLI commands
-    register_cli_commands(app)
-
-    # Import blueprints
-    from src.side_quest_py.routes.adventurer_routes import adventurer_bp
-    from src.side_quest_py.routes.auth_routes import auth_bp
-    from src.side_quest_py.routes.quest_routes import quest_bp
-    from src.side_quest_py.routes.user_routes import user_bp
-
-    # Register blueprints
-    app.register_blueprint(adventurer_bp, url_prefix="/api/v1")
-    app.register_blueprint(quest_bp, url_prefix="/api/v1")
-    app.register_blueprint(user_bp, url_prefix="/api/v1")
-    app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
+    # Configure CORS from settings
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+        allow_methods=settings.CORS_ALLOW_METHODS,
+        allow_headers=settings.CORS_ALLOW_HEADERS,
+    )
 
     # Add a simple route to verify the app is working
-    @app.route("/hello")
+    @app.get("/hello")
     def hello():
-        return "Hello, Side Quest!"
+        return {"message": "Hello, Side Quest!"}
 
     # Add health check endpoint
-    @app.route("/health")
-    def health_check():
-        from scripts.db.db_utils import get_db_status
+    @app.get("/health")
+    def health_check(db: Session = Depends(get_db)):
+        try:
+            # Test the database connection
+            db.execute(text("SELECT 1"))
+            db_status = "connected"
+        except SQLAlchemyError as e:
+            db_status = f"error: {str(e)}"
 
-        status = get_db_status(current_app)
         return {
-            "status": "healthy" if status["status"] == "connected" else "unhealthy",
-            "db": status,
-            "app": {"env": app.config.get("ENV", env), "debug": app.debug},
+            "status": "healthy" if db_status == "connected" else "unhealthy",
+            "db": {
+                "status": db_status,
+                "uri": settings.DATABASE_URL.split("@")[-1] if settings.DATABASE_URL else "Not configured",
+                "env": settings.FASTAPI_ENV,
+            },
+            "app": {"env": settings.FASTAPI_ENV, "debug": settings.DEBUG},
         }
+
+    # Include routers
+    # These will be converted from Flask blueprints to FastAPI routers
+    # For now, we'll comment them out until they're migrated
+    # from src.side_quest_py.routes.adventurer_routes import router as adventurer_router
+    # from src.side_quest_py.routes.auth_routes import router as auth_router
+    # from src.side_quest_py.routes.quest_routes import router as quest_router
+    # from src.side_quest_py.routes.user_routes import router as user_router
+
+    # app.include_router(adventurer_router, prefix=settings.API_PREFIX, tags=["adventurers"])
+    # app.include_router(quest_router, prefix=settings.API_PREFIX, tags=["quests"])
+    # app.include_router(user_router, prefix=settings.API_PREFIX, tags=["users"])
+    # app.include_router(auth_router, prefix=f"{settings.API_PREFIX}/auth", tags=["auth"])
 
     return app
 
 
-def register_cli_commands(app: Flask) -> None:
-    """Register CLI commands with the Flask application.
-
-    Args:
-        app: Flask application instance
-    """
-    # Import the CLI command functions from the scripts
-    from scripts.db.init_db import init_db_command as init_db
-    from scripts.db.reset_db import reset_db_command as reset_db
-    from scripts.db.seed_db import seed_db_command as seed_db
-    from scripts.db.migrate_db import migrate_db_command as migrate_db
-
-    # Register the commands with the application
-    app.cli.add_command(init_db)
-    app.cli.add_command(reset_db)
-    app.cli.add_command(seed_db)
-    app.cli.add_command(migrate_db)
-
-    @app.cli.command("db-status")
-    def db_status_command():
-        """Show database connection status."""
-        from scripts.db.db_utils import get_db_status
-
-        status = get_db_status(app)
-
-        print(f"Database status: {status['status']}")
-        print(f"Database URI: {status['uri']}")
-        print(f"Environment: {status['env']}")
-
-        return status
-
-
-# Create a default application instance for Flask CLI commands
-default_app = create_app()
+# Create a default application instance
+app = create_app()
