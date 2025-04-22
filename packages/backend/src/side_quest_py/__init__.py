@@ -64,21 +64,15 @@ def create_app() -> FastAPI:
             "app": {"env": settings.FASTAPI_ENV, "debug": settings.DEBUG},
         }
 
-    # Include routers
-    # These will be converted from Flask blueprints to FastAPI routers
-    # For now, we'll comment them out until they're migrated
-    # from src.side_quest_py.routes.adventurer_routes import router as adventurer_router
-    # from src.side_quest_py.routes.auth_routes import router as auth_router
-    # from src.side_quest_py.routes.quest_routes import router as quest_router
-    # from src.side_quest_py.routes.user_routes import router as user_router
+    from src.side_quest_py.api.routes.adventurer_routes import router as adventurer_router
+    from src.side_quest_py.api.routes.auth_routes import router as auth_router
+    from src.side_quest_py.api.routes.quests_routes import router as quest_router
 
-    # app.include_router(adventurer_router, prefix=settings.API_PREFIX, tags=["adventurers"])
-    # app.include_router(quest_router, prefix=settings.API_PREFIX, tags=["quests"])
-    # app.include_router(user_router, prefix=settings.API_PREFIX, tags=["users"])
-    # app.include_router(auth_router, prefix=f"{settings.API_PREFIX}/auth", tags=["auth"])
+    app.include_router(adventurer_router)
+    app.include_router(quest_router)
+    app.include_router(auth_router)
 
     return app
 
 
-# Create a default application instance
 app = create_app()

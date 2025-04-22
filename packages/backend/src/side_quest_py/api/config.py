@@ -56,6 +56,38 @@ class BaseConfig(BaseSettings):
     # Debug flag
     DEBUG: bool = False
 
+    # Gunicorn settings
+    GUNICORN_BIND: str | None = os.environ.get("GUNICORN_BIND")
+    if not GUNICORN_BIND:
+        raise ValueError("GUNICORN_BIND is not set")
+    GUNICORN_WORKERS: int | None = (
+        int(os.environ.get("GUNICORN_WORKERS")) if os.environ.get("GUNICORN_WORKERS") else None  # type: ignore
+    )
+    if not GUNICORN_WORKERS:
+        raise ValueError("GUNICORN_WORKERS is not set")
+    GUNICORN_WORKER_CLASS: str | None = os.environ.get("GUNICORN_WORKER_CLASS")
+    if not GUNICORN_WORKER_CLASS:
+        raise ValueError("GUNICORN_WORKER_CLASS is not set")
+    GUNICORN_ACCESS_LOG: str | None = os.environ.get("GUNICORN_ACCESS_LOG")
+    if not GUNICORN_ACCESS_LOG:
+        raise ValueError("GUNICORN_ACCESS_LOG is not set")
+    GUNICORN_ERROR_LOG: str | None = os.environ.get("GUNICORN_ERROR_LOG")
+    if not GUNICORN_ERROR_LOG:
+        raise ValueError("GUNICORN_ERROR_LOG is not set")
+    GUNICORN_LOG_LEVEL: str | None = os.environ.get("GUNICORN_LOG_LEVEL")
+    if not GUNICORN_LOG_LEVEL:
+        raise ValueError("GUNICORN_LOG_LEVEL is not set")
+    GUNICORN_TIMEOUT: int | None = (
+        int(os.environ.get("GUNICORN_TIMEOUT")) if os.environ.get("GUNICORN_TIMEOUT") else None  # type: ignore
+    )
+    if not GUNICORN_TIMEOUT:
+        raise ValueError("GUNICORN_TIMEOUT is not set")
+    GUNICORN_KEEPALIVE: int | None = (
+        int(os.environ.get("GUNICORN_KEEPALIVE")) if os.environ.get("GUNICORN_KEEPALIVE") else None  # type: ignore
+    )
+    if not GUNICORN_KEEPALIVE:
+        raise ValueError("GUNICORN_KEEPALIVE is not set")
+
     # Pydantic v2 config using model_config
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
