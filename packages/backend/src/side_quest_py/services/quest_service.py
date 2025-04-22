@@ -1,21 +1,34 @@
+"""
+This module contains the service for handling quest-related operations.
+"""
+
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .. import db
-from ..models.db_models import Quest
-from ..models.quest import (
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from ulid import ULID
+
+from src.side_quest_py.database import get_db
+from src.side_quest_py.models.db_models import Quest, Adventurer
+from src.side_quest_py.models.quest import (
     QuestCompletionError,
     QuestNotFoundError,
     QuestServiceError,
     QuestValidationError,
 )
 from .quest_completion_service import QuestCompletionService
-from ulid import ULID
+from .adventurer_service import AdventurerService
 
 
 class QuestService:
     """Service for handling quest-related operations."""
 
-    def create_quest(self, title: str, adventurer_id: str, experience_reward: int = 100) -> Quest:
+    def __init__(self, db: Session = Depends(get_db)) -> None:
+        """Initialize the quest service."""
+        self.db = db
+
+    async def create_quest(self, title: str, adventurer_id: str, experience_reward: int = 100) -> Quest:
         """
         Create a new quest.
 
@@ -31,7 +44,6 @@ class QuestService:
             QuestValidationError: If the quest data is invalid
         """
         try:
-            # Validate input
             if not title or not title.strip():
                 raise QuestValidationError("Quest title cannot be empty")
             if experience_reward < 0:
@@ -39,28 +51,32 @@ class QuestService:
             if not adventurer_id:
                 raise QuestValidationError("Adventurer ID is required")
 
-            # Create new quest with a generated ID
+            adventurer = self.db.query(Adventurer).filter_by(id=adventurer_id).first()
+            if not adventurer:
+                raise QuestValidationError(f"Adventurer with ID {adventurer_id} does not exist")
+
             quest = Quest(
                 id=str(ULID()),
                 title=title,
                 experience_reward=experience_reward,
                 completed=False,
                 adventurer_id=adventurer_id,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
             )
 
-            # Add to database
-            db.session.add(quest)
-            db.session.commit()
+            self.db.add(quest)
+            self.db.commit()
 
             return quest
         except QuestValidationError as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except Exception as e:
-            db.session.rollback()
+            self.db.rollback()
             raise QuestValidationError(f"Error creating quest: {str(e)}") from e
 
-    def get_quest(self, quest_id: str) -> Optional[Quest]:
+    async def get_quest(self, quest_id: str) -> Optional[Quest]:
         """
         Get a quest by its ID.
 
@@ -74,12 +90,12 @@ class QuestService:
             QuestNotFoundError: If there's an error finding the quest
         """
         try:
-            quest: Optional[Quest] = Quest.query.get(quest_id)
+            quest: Optional[Quest] = self.db.query(Quest).filter_by(id=quest_id).first()
             return quest
         except Exception as e:
             raise QuestNotFoundError(f"Quest with ID: {quest_id} not found") from e
 
-    def get_all_quests(self, adventurer_id: str) -> List[Quest]:
+    async def get_all_quests(self, adventurer_id: str) -> List[Quest]:
         """
         Get all quests.
 
@@ -90,12 +106,12 @@ class QuestService:
             QuestServiceError: If there's an error getting all quests
         """
         try:
-            quests: List[Quest] = Quest.query.filter_by(adventurer_id=adventurer_id).all()
+            quests: List[Quest] = self.db.query(Quest).filter_by(adventurer_id=adventurer_id).all()
             return quests
         except Exception as e:
             raise QuestServiceError(f"Error getting all quests: {str(e)}") from e
 
-    def get_uncompleted_quests(self) -> List[Quest]:
+    async def get_uncompleted_quests(self) -> List[Quest]:
         """
         Get all uncompleted quests.
 
@@ -106,12 +122,12 @@ class QuestService:
             QuestServiceError: If there's an error getting the quests
         """
         try:
-            quests: List[Quest] = Quest.query.filter_by(completed=False).all()
+            quests: List[Quest] = self.db.query(Quest).filter_by(completed=False).all()
             return quests
         except Exception as e:
             raise QuestServiceError(f"Error getting uncompleted quests: {str(e)}") from e
 
-    def update_quest(
+    async def update_quest(
         self,
         quest_id: str,
         title: Optional[str] = None,
@@ -137,14 +153,12 @@ class QuestService:
             QuestCompletionError: If there's an error completing the quest
         """
         try:
-            quest = self.get_quest(quest_id)
+            quest = await self.get_quest(quest_id)
             if not quest:
                 raise QuestNotFoundError(f"Quest with ID: {quest_id} not found")
 
-            # Save previous completion status
             was_previously_completed = quest.completed
 
-            # Update fields only if they are provided
             if title is not None:
                 setattr(quest, "title", title)
 
@@ -155,23 +169,32 @@ class QuestService:
                 setattr(quest, "experience_reward", experience_reward)
 
             if completed is not None:
-                # Check if quest is being marked as incomplete after being completed
                 if was_previously_completed is True and completed is False:
-                    quest_completion_service = QuestCompletionService()
+                    quest_completion_service = QuestCompletionService(db=self.db)
                     quest_completion_service.delete_quest_completion(quest_id)
                 setattr(quest, "completed", completed)
+                if completed is True:
+                    adventurer_id_str = str(adventurer_id) if adventurer_id is not None else str(quest.adventurer_id)
+                    experience_reward_int = (
+                        experience_reward if experience_reward is not None else quest.experience_reward
+                    )
+                    quest_completion_service = QuestCompletionService(db=self.db)
+                    quest_completion_service.create_quest_completion(quest_id, adventurer_id_str)
+                    adventurer_service = AdventurerService(db=self.db)
+                    await adventurer_service.gain_experience(adventurer_id_str, experience_reward_int)  # type: ignore
+                    setattr(quest, "completed", True)
 
-            db.session.commit()
+            self.db.commit()
 
             return quest
         except (QuestNotFoundError, QuestCompletionError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except (TypeError, ValueError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise QuestCompletionError(f"Error completing quest: {str(e)}") from e
 
-    def delete_quest(self, quest_id: str) -> bool:
+    async def delete_quest(self, quest_id: str) -> bool:
         """
         Delete a quest by ID.
 
@@ -186,18 +209,18 @@ class QuestService:
             QuestServiceError: If there's an error deleting the quest
         """
         try:
-            quest = self.get_quest(quest_id)
+            quest = await self.get_quest(quest_id)
             if not quest:
                 raise QuestNotFoundError(f"Quest with ID: {quest_id} not found")
 
-            db.session.delete(quest)
-            db.session.commit()
+            self.db.delete(quest)
+            self.db.commit()
 
             return True
         except QuestNotFoundError as e:
             raise e
         except Exception as e:
-            db.session.rollback()
+            self.db.rollback()
             raise QuestServiceError(f"Error deleting quest: {str(e)}") from e
 
     def quest_to_dict(self, quest: Quest) -> Dict[str, Any]:
@@ -212,8 +235,10 @@ class QuestService:
         """
         return {
             "id": quest.id,
+            "adventurer_id": quest.adventurer_id,
             "title": quest.title,
             "experience_reward": quest.experience_reward,
             "completed": quest.completed,
-            "adventurer_id": quest.adventurer_id,
+            "created_at": quest.created_at,
+            "updated_at": quest.updated_at,
         }

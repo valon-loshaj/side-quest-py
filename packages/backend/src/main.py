@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.side_quest_py.api.config import settings
 from src.side_quest_py.api.routes.auth_routes import router as auth_router
 from src.side_quest_py.api.routes.adventurer_routes import router as adventurer_router
+from src.side_quest_py.api.routes.quests_routes import router as quests_router
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -42,10 +43,7 @@ async def health_check():
 # Import and include routers
 app.include_router(auth_router)
 app.include_router(adventurer_router)
-# from src.side_quest_py.api.routes import adventurer_router, quest_router, etc.
-# app.include_router(adventurer_router)
-# app.include_router(quest_router)
-# ...
+app.include_router(quests_router)
 
 if __name__ == "__main__":
     import uvicorn

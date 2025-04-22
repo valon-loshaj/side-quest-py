@@ -5,8 +5,13 @@ from sqlalchemy.orm import Session
 from ulid import ULID
 
 from src.side_quest_py.database import get_db
-from src.side_quest_py.models.adventurer import AdventurerValidationError, LevelCalculator
-from src.side_quest_py.models.db_models import Adventurer, QuestCompletion
+from src.side_quest_py.models.adventurer import (
+    AdventurerValidationError,
+    LevelCalculator,
+    AdventurerNotFoundError,
+    AdventurerDeletionError,
+)
+from src.side_quest_py.models.db_models import Adventurer
 
 
 class AdventurerService:
@@ -103,7 +108,7 @@ class AdventurerService:
         Returns:
             bool: True if the adventurer was deleted, False otherwise
         """
-        adventurer = self.get_adventurer_by_id(adventurer_id)
+        adventurer = await self.get_adventurer_by_id(adventurer_id)
         if adventurer:
             try:
                 self.db.delete(adventurer)
@@ -112,6 +117,9 @@ class AdventurerService:
             except (TypeError, ValueError) as e:
                 self.db.rollback()
                 raise AdventurerValidationError(f"Error deleting adventurer: {str(e)}") from e
+            except Exception as e:
+                self.db.rollback()
+                raise AdventurerDeletionError(f"Unexpected error deleting adventurer: {str(e)}") from e
         return False
 
     async def update_adventurer(self, adventurer_id: str, **kwargs: Any) -> Optional[Adventurer]:
@@ -140,97 +148,42 @@ class AdventurerService:
             self.db.rollback()
             raise AdventurerValidationError(f"Error updating adventurer: {str(e)}") from e
 
-    # def gain_experience(self, adventurer_id: str, experience_gain: int) -> Optional[Adventurer]:
-    #     """
-    #     Add experience to the adventurer and handle level up if necessary.
+    async def gain_experience(self, adventurer_id: str, experience_gain: int) -> Optional[Adventurer]:
+        """
+        Add experience to the adventurer and handle level up if necessary.
 
-    #     Args:
-    #         adventurer_id: ID of the adventurer gaining experience
-    #         experience_gain: Amount of experience gained
+        Args:
+            adventurer_id: ID of the adventurer gaining experience
+            experience_gain: Amount of experience gained
 
-    #     Returns:
-    #         Optional[Adventurer]: The updated adventurer or None if not found
+        Returns:
+            Optional[Adventurer]: The updated adventurer or None if not found
 
-    #     Raises:
-    #         AdventurerValidationError: If the experience gained is negative or other validation errors occur
-    #     """
-    #     if experience_gain < 0:
-    #         raise AdventurerValidationError("Experience gain cannot be negative")
+        Raises:
+            AdventurerValidationError: If the experience gained is negative or other validation errors occur
+        """
+        if experience_gain < 0:
+            raise AdventurerValidationError("Experience gain cannot be negative")
 
-    #     adventurer = self.get_adventurer_by_id(adventurer_id)
-    #     if not adventurer:
-    #         return None
+        adventurer = await self.get_adventurer_by_id(adventurer_id)
+        if not adventurer:
+            raise AdventurerNotFoundError(f"Adventurer with ID {adventurer_id} not found")
 
-    #     try:
-    #         adventurer.experience += experience_gain  # type: ignore
+        try:
+            current_experience = adventurer.experience
+            current_level = adventurer.level
+            adventurer.experience += experience_gain  # type: ignore
 
-    #         required_exp = self.level_calculator.calculate_req_exp(adventurer.level)  # type: ignore
-    #         if adventurer.experience >= required_exp:  # type: ignore
-    #             adventurer.level += 1  # type: ignore
-    #             adventurer.experience = 0  # type: ignore
+            required_exp = self.level_calculator.calculate_req_exp(current_level)  # type: ignore
+            if current_experience + experience_gain >= required_exp:  # type: ignore
+                adventurer.level += 1  # type: ignore
+                adventurer.experience = 0  # type: ignore
 
-    #         self.db.commit()
-    #         return adventurer
-    #     except (TypeError, ValueError) as e:
-    #         self.db.rollback()
-    #         raise AdventurerValidationError(f"Error gaining experience: {str(e)}") from e
-
-    # def complete_quest(self, adventurer_id: str, quest_id: str, experience_gain: int) -> Optional[Dict[str, Any]]:
-    #     """
-    #     Process quest completion for an adventurer.
-
-    #     Args:
-    #         adventurer_id: ID of the adventurer completing the quest
-    #         quest_id: ID of the quest being completed
-    #         experience_gain: Experience gained from completing the quest
-
-    #     Returns:
-    #         Optional[Dict[str, Any]]: Result containing was_new_completion and leveled_up flags, or None if adventurer not found
-
-    #     Raises:
-    #         AdventurerValidationError: If there are validation errors with the quest completion
-    #     """
-    #     if not quest_id:
-    #         raise AdventurerValidationError("Quest ID cannot be empty")
-    #     if experience_gain < 0:
-    #         raise AdventurerValidationError("Experience gain cannot be negative")
-
-    #     adventurer = self.get_adventurer_by_id(adventurer_id)
-    #     if not adventurer:
-    #         return None
-
-    #     try:
-    #         completion = (
-    #             self.db.query(QuestCompletion).filter_by(adventurer_id=adventurer.id, quest_id=quest_id).first()
-    #         )
-
-    #         was_new = completion is None
-
-    #         if was_new:
-    #             new_completion = QuestCompletion(adventurer_id=adventurer.id, quest_id=quest_id)
-    #             self.db.add(new_completion)
-
-    #             old_level = adventurer.level
-
-    #             adventurer.experience += experience_gain  # type: ignore
-
-    #             required_exp = self.level_calculator.calculate_req_exp(old_level)  # type: ignore
-    #             leveled_up = False
-
-    #             if adventurer.experience >= required_exp:  # type: ignore
-    #                 adventurer.level += 1  # type: ignore
-    #                 adventurer.experience = 0  # type: ignore
-    #                 leveled_up = True
-
-    #             self.db.commit()
-
-    #             return {"was_new_completion": True, "leveled_up": leveled_up}
-    #         else:
-    #             return {"was_new_completion": False, "leveled_up": False}
-
-    #     except (TypeError, ValueError) as e:
-    #         self.db.rollback()
-    #         raise AdventurerValidationError(f"Error completing quest: {str(e)}") from e
+            self.db.commit()
+            return adventurer
+        except (TypeError, ValueError) as e:
+            self.db.rollback()
+            raise AdventurerValidationError(f"Error gaining experience: {str(e)}") from e
 
     def adventurer_to_dict(self, adventurer: Adventurer) -> Dict[str, Any]:
         """

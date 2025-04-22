@@ -1,10 +1,22 @@
-from .. import db
-from ..models.db_models import QuestCompletion
-from ..models.quest import QuestCompletionError, QuestNotFoundError
+"""
+This module contains the service for handling quest completion-related operations.
+"""
+
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from datetime import datetime
+from ulid import ULID
+
+from src.side_quest_py.database import get_db
+from src.side_quest_py.models.db_models import QuestCompletion
+from src.side_quest_py.models.quest import QuestCompletionError, QuestNotFoundError
 
 
 class QuestCompletionService:
     """Service for handling quest completion-related operations."""
+
+    def __init__(self, db: Session = Depends(get_db)):
+        self.db = db
 
     def create_quest_completion(self, quest_id: str, adventurer_id: str) -> QuestCompletion:
         """
@@ -23,20 +35,23 @@ class QuestCompletionService:
         """
         try:
             quest_completion = QuestCompletion(
+                id=str(ULID()),
                 quest_id=quest_id,
                 adventurer_id=adventurer_id,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
             )
-            db.session.add(quest_completion)
-            db.session.commit()
+            self.db.add(quest_completion)
+            self.db.commit()
             return quest_completion
         except QuestNotFoundError as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except QuestCompletionError as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except Exception as e:
-            db.session.rollback()
+            self.db.rollback()
             raise QuestCompletionError(f"Error creating quest completion: {str(e)}") from e
 
     def get_quest_completion(self, quest_id: str) -> QuestCompletion:
@@ -53,13 +68,13 @@ class QuestCompletionService:
             QuestCompletionError: If there's an error getting the quest completion
         """
         try:
-            quest_completion = QuestCompletion.query.filter_by(quest_id=quest_id).first()
+            quest_completion = self.db.query(QuestCompletion).filter_by(quest_id=quest_id).first()
             return quest_completion
         except QuestCompletionError as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except (TypeError, ValueError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise QuestCompletionError(f"Error getting quest completion: {str(e)}") from e
 
     def delete_quest_completion(self, quest_id: str) -> bool:
@@ -76,13 +91,15 @@ class QuestCompletionService:
             QuestCompletionError: If there's an error deleting the quest completion
         """
         try:
-            quest_completion = QuestCompletion.query.filter_by(quest_id=quest_id).first()
-            db.session.delete(quest_completion)
-            db.session.commit()
-            return True
+            quest_completion = self.db.query(QuestCompletion).filter_by(quest_id=quest_id).first()
+            if quest_completion:
+                self.db.delete(quest_completion)
+                self.db.commit()
+                return True
+            return False
         except QuestCompletionError as e:
-            db.session.rollback()
+            self.db.rollback()
             raise e
         except (TypeError, ValueError) as e:
-            db.session.rollback()
+            self.db.rollback()
             raise QuestCompletionError(f"Error deleting quest completion: {str(e)}") from e

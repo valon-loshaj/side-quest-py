@@ -2,14 +2,16 @@
 This module contains the routes for the adventurer endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+
 from src.side_quest_py.api.schemas.adventurer import AdventurerCreate, AdventurerUpdate, AdventurerResponse
 from src.side_quest_py.services.adventurer_service import AdventurerService
 from src.side_quest_py.services.auth_service import AuthService
 from src.side_quest_py.api.deps.auth_helpers import extract_token_from_header, verify_auth_token
-from pydantic import ValidationError
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/api/v1", tags=["adventurer"])
 
@@ -33,6 +35,11 @@ async def create_adventurer(
         The created adventurer
     """
     try:
+        auth_token = extract_token_from_header(request)
+        user = verify_auth_token(auth_token, auth_service)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
         request_body = await request.json()
         if not request_body:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body is required")
@@ -46,9 +53,6 @@ async def create_adventurer(
                 simplified_errors[field] = error["msg"]
 
             return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"errors": simplified_errors})
-
-        auth_token = extract_token_from_header(request)
-        user = verify_auth_token(auth_token, auth_service)
 
         user_id_str = str(user.id)
         created_adventurer = await adventurer_service.create_adventurer(
@@ -107,7 +111,7 @@ async def update_adventurer(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.delete("/adventurer/{adventurer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/adventurer/{adventurer_id}", status_code=status.HTTP_200_OK)
 async def delete_adventurer(
     adventurer_id: str,
     request: Request,
@@ -136,7 +140,10 @@ async def delete_adventurer(
         if not success:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Adventurer not found")
 
-        return None
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": f"Adventurer with ID: {adventurer_id} deleted successfully"},
+        )
     except HTTPException as e:
         raise e
     except Exception as e:
