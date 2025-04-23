@@ -5,7 +5,9 @@
 
     color-scheme: light dark;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+
+    /* Remove the background-color as it's now set via the background image */
+    /* background-color: #242424; */
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -29,6 +31,13 @@ body {
     place-items: center;
     min-width: 320px;
     min-height: 100vh;
+
+    /* Set the background image globally */
+    background-image: url('/side-quest-background.avif');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
 }
 
 h1 {
@@ -57,10 +66,13 @@ button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Override the light theme since we're using a dark background image */
 @media (prefers-color-scheme: light) {
     :root {
-        color: #213547;
-        background-color: #ffffff;
+        color: #f8f8f8;
+        /* Keep text light for readability against the dark background */
+        background-color: transparent;
+        /* Let the body background image show through */
     }
 
     a:hover {
@@ -68,6 +80,9 @@ button:focus-visible {
     }
 
     button {
-        background-color: #f9f9f9;
+        background-color: rgba(249, 249, 249, 0.8);
+        /* Semi-transparent buttons */
+        color: #333;
+        /* Dark text on light buttons */
     }
 }

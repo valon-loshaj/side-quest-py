@@ -62,6 +62,7 @@ const Login = () => {
                         value={username}
                         onChange={e => setUsername(e.target.value)}
                         required
+                        autoComplete="current-username"
                     />
                 </div>
 
@@ -73,6 +74,7 @@ const Login = () => {
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         required
+                        autoComplete="current-password"
                     />
                 </div>
 

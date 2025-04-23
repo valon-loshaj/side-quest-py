@@ -7,11 +7,12 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import AdventurerHub from './pages/AdventurerHub';
+import LandingPage from './pages/LandingPage';
+import TestScrollPage from './pages/TestScrollPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ROUTES, RouteNames } from './types/routes';
 import * as tokenService from './services/token-service';
 import './App.css';
-
 function App() {
     const { isAuthenticated, loading } = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -44,8 +45,6 @@ function App() {
         checkAuth();
     }, []);
 
-    // Only show initial loading spinner while first auth check is happening
-    // Prevents the initial flash of login screen
     if (loading && !initialAuthCheckDone) {
         return <div className="app-loading">Loading...</div>;
     }
@@ -54,18 +53,10 @@ function App() {
         <BrowserRouter>
             <Routes>
                 {/* Root route - redirects based on auth status */}
-                <Route
-                    path="/"
-                    element={
-                        <Navigate
-                            to={
-                                isAuthenticated
-                                    ? ROUTES[RouteNames.DASHBOARD].path
-                                    : ROUTES[RouteNames.LOGIN].path
-                            }
-                        />
-                    }
-                />
+                <Route path="/" element={<LandingPage />} />
+
+                {/* Test scroll page for debugging */}
+                <Route path="/test-scroll" element={<TestScrollPage />} />
 
                 {/* Login route - redirects to dashboard if already authenticated */}
                 <Route
@@ -74,9 +65,7 @@ function App() {
                         isAuthenticated ? (
                             <Navigate to={ROUTES[RouteNames.DASHBOARD].path} />
                         ) : (
-                            <Layout>
-                                <Login />
-                            </Layout>
+                            <Login />
                         )
                     }
                 />
@@ -107,7 +96,7 @@ function App() {
                             </Layout>
                         }
                     />
-                    {/* Add more protected routes here as needed */}
+                    {/* More protected routes can be added here as needed */}
                 </Route>
 
                 {/* Catch-all route for unknown paths */}

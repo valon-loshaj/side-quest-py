@@ -1,19 +1,36 @@
 .loginContainer {
     width: 100%;
-    text-align: center;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+}
+
+.loginContainer form {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: var(--color-white);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .loginContainer h2 {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    color: var(--color-primary, white);
 }
 
 .errorMessage {
     color: #e53935;
-    margin-bottom: 1rem;
-    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
     background-color: rgba(229, 57, 53, 0.1);
     border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
 }
 
 .formGroup {
@@ -52,6 +69,7 @@
     font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    margin-bottom: 0.75rem;
 }
 
 .registerButton {
