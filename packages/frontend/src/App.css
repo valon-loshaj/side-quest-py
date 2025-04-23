@@ -1,8 +1,39 @@
 #root {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 2rem;
+    max-width: none;
+    margin: 0;
+    padding: 0;
     text-align: center;
+    width: 100vw;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    background-image: url('/images/side-quest-background.avif');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.25);
+    z-index: -1;
 }
 
 .logo {
@@ -42,4 +73,26 @@
 
 .read-the-docs {
     color: #888;
+}
+
+.app-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    font-size: 1.5rem;
+    color: var(--color-green);
+}
+
+.container {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    backdrop-filter: blur(2px);
+}
+
+.dashboard,
+.leftSidebar,
+.main {
+    background-color: rgba(56, 56, 56, 0.7);
 }
