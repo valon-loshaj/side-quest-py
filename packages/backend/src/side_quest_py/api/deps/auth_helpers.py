@@ -5,7 +5,7 @@ Authentication helper functions for validating requests and tokens.
 from fastapi import Request, HTTPException, status
 
 from src.side_quest_py.services.auth_service import AuthService
-from src.side_quest_py.models.user import User
+from src.side_quest_py.models.db_models import User
 
 
 def extract_token_from_header(request: Request) -> str:

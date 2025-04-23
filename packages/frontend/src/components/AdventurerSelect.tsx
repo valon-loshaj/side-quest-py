@@ -13,6 +13,7 @@ const AdventurerSelect: React.FC = () => {
     } = useAdventurer();
 
     useEffect(() => {
+        console.log('[AdventurerSelect] Fetching all adventurers');
         // Fetch adventurers in all cases to ensure we have data
         fetchAllAdventurers();
 

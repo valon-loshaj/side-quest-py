@@ -9,7 +9,7 @@
     "scripts": {
         "dev:frontend": "pnpm --filter frontend dev",
         "build:frontend": "pnpm --filter frontend build",
-        "dev:backend": "cd packages/backend && source venv/bin/activate && gunicorn src.main:app --config=gunicorn.conf.py --reload --worker-class=uvicorn.workers.UvicornWorker",
+        "dev:backend": "bash -c 'source setup_pythonpath.sh && cd packages/backend && source venv/bin/activate && gunicorn src.main:app --config=gunicorn.conf.py --reload --worker-class=uvicorn.workers.UvicornWorker'",
         "start": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
         "lint": "pnpm --filter frontend lint",
         "test": "pnpm --filter frontend test"

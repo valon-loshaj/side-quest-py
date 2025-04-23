@@ -17,6 +17,7 @@ export const useAdventurer = () => {
     );
 
     const fetchAllAdventurers = useCallback(() => {
+        console.log('[useAdventurer] Fetching all adventurers');
         return dispatch(fetchAdventurers());
     }, [dispatch]);
 

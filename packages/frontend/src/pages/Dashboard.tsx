@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { useAdventurer } from '../store/hooks/useAdventurer';
 import { useQuest } from '../store/hooks/useQuest';
 import styles from '../styles/Dashboard.module.css';
-import { logout } from '../store/slices/authSlice';
+import { logout, getCurrentUser } from '../store/slices/authSlice';
 import { Link } from 'react-router-dom';
 import { Quest } from '../types/models';
 import { EditingQuestState } from '../store/slices/questSlice';
@@ -33,22 +33,43 @@ const Dashboard: React.FC = () => {
     const [adventurersLoading, setAdventurersLoading] = useState(false);
     const [questsLoading, setQuestsLoading] = useState(false);
     const adventurersFetchedRef = useRef(false);
+    const userFetchedRef = useRef(false);
+
+    // Fetch user data if not already loaded
+    useEffect(() => {
+        if (!user && !userFetchedRef.current && !authLoading) {
+            userFetchedRef.current = true;
+            dispatch(getCurrentUser());
+        }
+    }, [user, dispatch, authLoading]);
 
     // First useEffect - fetch adventurers once user data is available
     useEffect(() => {
         // Only fetch if we have a user but no adventurers
-        if (user && !adventurers.length && !adventurersFetchedRef.current) {
+        console.log('[Dashboard] Checking if should fetch adventurers:', {
+            user: !!user,
+            adventurersExist: !!adventurers && !!adventurers.length,
+            alreadyFetched: adventurersFetchedRef.current,
+        });
+
+        if (
+            user &&
+            (!adventurers || !adventurers.length) &&
+            !adventurersFetchedRef.current
+        ) {
+            console.log('[Dashboard] Fetching adventurers for user:', user.id);
             adventurersFetchedRef.current = true;
             setAdventurersLoading(true);
             fetchAllAdventurers().finally(() => {
+                console.log('[Dashboard] Finished fetching adventurers');
                 setAdventurersLoading(false);
             });
         }
-    }, [user, adventurers.length, fetchAllAdventurers]);
+    }, [user, adventurers, fetchAllAdventurers]);
 
     // Second useEffect - select the first adventurer if none is selected but adventurers are available
     useEffect(() => {
-        if (!currentAdventurer && adventurers.length > 0) {
+        if (!currentAdventurer && adventurers && adventurers.length > 0) {
             selectAdventurer(adventurers[0]);
         }
     }, [adventurers, currentAdventurer, selectAdventurer]);

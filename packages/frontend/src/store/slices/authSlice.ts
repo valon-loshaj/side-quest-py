@@ -28,16 +28,32 @@ export const login = createAsyncThunk<UserLoginResponse, UserLoginRequest>(
     'auth/login',
     async (credentials, { rejectWithValue }) => {
         try {
-            const response = await apiClient.post<UserLoginResponse>(
-                '/api/v1/auth/login',
-                credentials
-            );
+            // Create form data payload as OAuth2 expects
+            const formData = new URLSearchParams();
+            formData.append('username', credentials.username);
+            formData.append('password', credentials.password);
 
-            if (response.data.auth_token) {
-                // Clear any existing token first
+            const headers = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            };
+
+            // Make a direct fetch call for OAuth2 format
+            const response = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: headers,
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                return rejectWithValue(errorData.detail || 'Login failed');
+            }
+
+            const data = await response.json();
+
+            if (data.access_token) {
                 tokenService.removeToken();
-                // Then set the new token
-                tokenService.setToken(response.data.auth_token);
+                tokenService.setToken(data.access_token);
 
                 if (import.meta.env.MODE !== 'production') {
                     console.log('Login successful, token stored');
@@ -47,10 +63,10 @@ export const login = createAsyncThunk<UserLoginResponse, UserLoginRequest>(
                     );
                 }
             } else {
-                console.error('No auth_token found in login response:', response.data);
+                console.error('No access_token found in login response:', data);
             }
 
-            return response.data;
+            return data;
         } catch (error: unknown) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Login failed';
@@ -111,8 +127,12 @@ export const getCurrentUser = createAsyncThunk(
     'auth/getCurrentUser',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await apiClient.get<{ user: User }>('/api/v1/auth/me');
-            return response.data.user;
+            const response = await apiClient.get<User>('/api/v1/auth/me');
+            console.log(
+                '[AuthSlice] User data successfully fetched:',
+                response.data?.id
+            );
+            return response.data;
         } catch (error: unknown) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to fetch user data';
@@ -152,12 +172,12 @@ export const checkAuthStatus = createAsyncThunk(
 
             // Directly make the API call instead of dispatching another action
             try {
-                const response = await apiClient.get<{ user: User }>('/api/v1/auth/me');
+                const response = await apiClient.get<User>('/api/v1/auth/me');
                 console.log(
                     'AuthSlice: User data successfully fetched:',
-                    response.data.user?.id
+                    response.data?.id
                 );
-                return response.data.user;
+                return response.data;
             } catch (error) {
                 console.error('AuthSlice: Error fetching user with token:', error);
 
