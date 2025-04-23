@@ -148,7 +148,7 @@ export const updateQuest = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const response = await apiClient.patch<QuestResponse>(
+            const response = await apiClient.put<QuestResponse>(
                 `${API_BASE_URL}/quest/${id}`,
                 {
                     title: questData.title,

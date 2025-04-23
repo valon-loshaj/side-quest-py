@@ -192,3 +192,13 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(exc)}"
             ) from exc
+
+    def user_to_dict(self, user: User) -> Dict[str, Any]:
+        """Convert a User object to a dictionary."""
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "created_at": user.created_at,
+            "updated_at": user.updated_at,
+        }

@@ -90,7 +90,7 @@ async def logout(request: Request, auth_service: AuthService = Depends()):
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
-        current_user_id = user.id
+        current_user_id = str(user.id)
         auth_service.logout_user(current_user_id)
         return {"detail": "Successfully logged out"}
     except HTTPException:
@@ -98,4 +98,25 @@ async def logout(request: Request, auth_service: AuthService = Depends()):
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(exc)}"
+        ) from exc
+
+
+@router.get("/me", response_model=UserResponse, status_code=status.HTTP_200_OK)
+async def get_current_user(request: Request, auth_service: AuthService = Depends()):
+    """
+    Get the current user's information.
+    """
+    try:
+        auth_token = extract_token_from_header(request)
+        user = verify_auth_token(auth_token, auth_service)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+        # Get the db user model instead of the token user model
+        return auth_service.user_to_dict(user)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get current user: {str(exc)}"
         ) from exc

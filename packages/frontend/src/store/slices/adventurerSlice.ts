@@ -17,7 +17,7 @@ interface CreateAdventurerRequest {
 }
 
 interface CompleteQuestRequest {
-    adventurerName: string;
+    adventurerId: string;
     questId: string;
     [key: string]: unknown;
 }
@@ -45,12 +45,12 @@ export const fetchAdventurers = createAsyncThunk(
     'adventurer/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await apiClient.get<{
-                adventurers: Adventure[];
-                count: number;
-            }>('/api/v1/adventurers');
-            return response.data.adventurers;
+            console.log('[AdventurerSlice] Sending request to fetch adventurers');
+            const response = await apiClient.get<Adventure[]>('/api/v1/adventurers');
+            console.log('[AdventurerSlice] Adventurers fetched:', response.data);
+            return response.data;
         } catch (error: unknown) {
+            console.error('[AdventurerSlice] Error fetching adventurers:', error);
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to fetch adventurers';
             return rejectWithValue(errorMessage);
@@ -114,7 +114,7 @@ export const completeQuest = createAsyncThunk(
     async (data: CompleteQuestRequest, { rejectWithValue }) => {
         try {
             const response = await apiClient.post<QuestCompletionResponse>(
-                `/api/v1/adventurer/${data.adventurerName}/quest/${data.questId}`
+                `/api/v1/adventurer/${data.adventurerId}/quest/${data.questId}`
             );
 
             return {
@@ -161,6 +161,9 @@ const adventurerSlice = createSlice({
         });
         builder.addCase(createAdventurer.fulfilled, (state, action) => {
             state.loading = false;
+            if (!state.adventurers) {
+                state.adventurers = [];
+            }
             state.adventurers.push(action.payload);
             state.currentAdventurer = action.payload;
         });
