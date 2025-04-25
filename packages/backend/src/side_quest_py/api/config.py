@@ -88,6 +88,33 @@ class BaseConfig(BaseSettings):
     if not GUNICORN_KEEPALIVE:
         raise ValueError("GUNICORN_KEEPALIVE is not set")
 
+    # Celery settings
+    CELERY_BROKER_URL: str | None = os.environ.get("CELERY_BROKER_URL")
+    if not CELERY_BROKER_URL:
+        raise ValueError("CELERY_BROKER_URL is not set")
+
+    # RabbitMQ settings
+    RABBITMQ_URL: str | None = os.environ.get("RABBITMQ_URL")
+    if not RABBITMQ_URL:
+        raise ValueError("RABBITMQ_URL is not set")
+
+    # SMTP settings
+    SMTP_SERVER: str | None = os.environ.get("SMTP_SERVER")
+    if not SMTP_SERVER:
+        raise ValueError("SMTP_SERVER is not set")
+    SMTP_PORT: int | None = int(os.environ.get("SMTP_PORT")) if os.environ.get("SMTP_PORT") else None  # type: ignore
+    if not SMTP_PORT:
+        raise ValueError("SMTP_PORT is not set")
+    SMTP_USERNAME: str | None = os.environ.get("SMTP_USERNAME")
+    if not SMTP_USERNAME:
+        raise ValueError("SMTP_USERNAME is not set")
+    SMTP_PASSWORD: str | None = os.environ.get("SMTP_PASSWORD")
+    if not SMTP_PASSWORD:
+        raise ValueError("SMTP_PASSWORD is not set")
+    SMTP_SENDER_EMAIL: str | None = os.environ.get("SMTP_SENDER_EMAIL")
+    if not SMTP_SENDER_EMAIL:
+        raise ValueError("SMTP_SENDER_EMAIL is not set")
+
     # Pydantic v2 config using model_config
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
