@@ -308,6 +308,15 @@ const Dashboard: React.FC = () => {
                     {isValidAdventurer && (
                         <div className={styles.currentAdventurer}>
                             <h2>Current Adventurer</h2>
+                            <div className={styles.avatarContainer}>
+                                <div className={styles.avatarCircle}>
+                                    <img
+                                        src={`/images/${(currentAdventurer.adventurer_type || 'Amazon').toLowerCase()}.png`}
+                                        alt={`${currentAdventurer.adventurer_type || 'Amazon'} avatar`}
+                                        className={styles.avatarImage}
+                                    />
+                                </div>
+                            </div>
                             <p className={styles.adventurerName}>
                                 {currentAdventurer.name}
                             </p>
