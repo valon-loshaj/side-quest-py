@@ -12,6 +12,7 @@ from src.side_quest_py.models.adventurer import (
     AdventurerDeletionError,
 )
 from src.side_quest_py.models.db_models import Adventurer
+from src.side_quest_py.tasks.email_tasks import send_level_up_email
 
 
 class AdventurerService:
@@ -162,6 +163,7 @@ class AdventurerService:
         Raises:
             AdventurerValidationError: If the experience gained is negative or other validation errors occur
         """
+
         if experience_gain < 0:
             raise AdventurerValidationError("Experience gain cannot be negative")
 
@@ -175,11 +177,23 @@ class AdventurerService:
             adventurer.experience += experience_gain  # type: ignore
 
             required_exp = self.level_calculator.calculate_req_exp(current_level)  # type: ignore
+
+            leveled_up = False
             if current_experience + experience_gain >= required_exp:  # type: ignore
+
                 adventurer.level += 1  # type: ignore
                 adventurer.experience = 0  # type: ignore
 
+                leveled_up = True
+                adventurer.leveled_up = True  # type: ignore
+
             self.db.commit()
+
+            if leveled_up:
+                send_level_up_email.delay(
+                    adventurer_id=str(adventurer.id), old_level=current_level, new_level=adventurer.level
+                )
+
             return adventurer
         except (TypeError, ValueError) as e:
             self.db.rollback()
