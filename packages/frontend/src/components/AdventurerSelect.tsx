@@ -59,7 +59,10 @@ const AdventurerSelect: React.FC = () => {
                         >
                             <div className={styles.avatarContainer}>
                                 <div className={styles.avatar}>
-                                    {adventurer.name.charAt(0).toUpperCase()}
+                                    <img
+                                        src={`/images/${(adventurer.adventurer_type || 'Amazon').toLowerCase()}.png`}
+                                        alt={`${adventurer.adventurer_type || 'Amazon'} avatar`}
+                                    />
                                 </div>
                             </div>
                             <div className={styles.adventurerInfo}>
