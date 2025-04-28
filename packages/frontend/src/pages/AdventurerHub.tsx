@@ -36,10 +36,16 @@ const AdventurerHub: React.FC = () => {
         }
 
         if (id) {
+            console.log('[AdventurerHub] ID from URL parameter:', id);
+            console.log('[AdventurerHub] ID type:', typeof id);
+
             // Check if adventurer data is already available in user object
             const foundAdventurer = user?.adventurers?.find(
-                adv => adv && adv.id === id && adv.name && typeof adv.name === 'string'
+                adv => adv && adv.id === id
             );
+
+            console.log('[AdventurerHub] User data:', user);
+            console.log('[AdventurerHub] User adventurers:', user?.adventurers);
 
             if (foundAdventurer) {
                 // Use adventurer from user object
@@ -47,17 +53,66 @@ const AdventurerHub: React.FC = () => {
             } else {
                 // Fetch from API if not available
                 setLoading(true);
+                console.log(
+                    '[AdventurerHub] Fetching adventurer from API with ID:',
+                    id
+                );
                 fetchAdventurerById(id)
                     .unwrap()
                     .then(adventurer => {
-                        // Validate the fetched adventurer
-                        if (!adventurer || !adventurer.name) {
-                            throw new Error('Invalid adventurer data received');
+                        console.log('[AdventurerHub] API response:', adventurer);
+                        console.log(
+                            '[AdventurerHub] API response isEmpty:',
+                            !adventurer
+                        );
+                        console.log(
+                            '[AdventurerHub] API response type:',
+                            typeof adventurer
+                        );
+
+                        // Log detailed structure to debug
+                        console.log(
+                            '[AdventurerHub] Response structure:',
+                            JSON.stringify(adventurer, null, 2)
+                        );
+
+                        // The thunk already extracts adventurer from response.data.adventurer
+                        // No need to access .adventurer again
+                        const adventurerData = adventurer;
+
+                        // More flexible validation
+                        if (!adventurerData) {
+                            console.error(
+                                '[AdventurerHub] No adventurer data received:',
+                                adventurerData
+                            );
+                            throw new Error('No adventurer data received');
                         }
+
+                        if (!adventurerData.id) {
+                            console.error(
+                                '[AdventurerHub] Missing ID in adventurer data:',
+                                adventurerData
+                            );
+                            throw new Error('Invalid adventurer data: missing ID');
+                        }
+
+                        // Successful validation, select the adventurer
+                        console.log(
+                            '[AdventurerHub] Selecting adventurer:',
+                            adventurerData
+                        );
+                        selectAdventurer(adventurerData);
                     })
                     .catch(err => {
+                        console.error(
+                            '[AdventurerHub] Error fetching adventurer:',
+                            err
+                        );
                         setError(
-                            typeof err === 'string' ? err : 'Failed to load adventurer'
+                            typeof err === 'string'
+                                ? err
+                                : err.message || 'Failed to load adventurer'
                         );
                     })
                     .finally(() => {

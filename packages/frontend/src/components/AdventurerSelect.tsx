@@ -53,8 +53,8 @@ const AdventurerSelect: React.FC = () => {
                 ) : (
                     validAdventurers.map(adventurer => (
                         <div
-                            key={adventurer.name}
-                            className={`${styles.adventurerCardSidebar} ${currentAdventurer?.name === adventurer.name ? styles.selected : ''}`}
+                            key={adventurer.id}
+                            className={`${styles.adventurerCardSidebar} ${currentAdventurer?.id === adventurer.id ? styles.selected : ''}`}
                             onClick={() => selectAdventurer(adventurer)}
                         >
                             <div className={styles.avatarContainer}>
@@ -74,7 +74,7 @@ const AdventurerSelect: React.FC = () => {
                                 </p>
                             </div>
                             <Link
-                                to={`/adventurer/${adventurer.name}`}
+                                to={`/adventurer/${adventurer.id}`}
                                 className={styles.manageLink}
                             >
                                 Manage
