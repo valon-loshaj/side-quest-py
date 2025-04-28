@@ -95,13 +95,37 @@ export const createAdventurer = createAsyncThunk(
 
 export const getAdventurer = createAsyncThunk(
     'adventurer/getOne',
-    async (name: string, { rejectWithValue }) => {
+    async (id: string, { rejectWithValue }) => {
         try {
-            const response = await apiClient.get<{ adventurer: Adventure }>(
-                `/api/v1/adventurer/${name}`
-            );
-            return response.data.adventurer;
+            console.log('[AdventurerSlice] Getting adventurer with ID:', id);
+            const endpoint = `/api/v1/adventurer/${id}`;
+            console.log('[AdventurerSlice] API endpoint:', endpoint);
+
+            const response = await apiClient.get<{ adventurer: Adventure }>(endpoint);
+
+            console.log('[AdventurerSlice] Adventurer API response:', response);
+            console.log('[AdventurerSlice] Adventurer data:', response.data);
+
+            if (!response.data) {
+                console.error('[AdventurerSlice] Empty response data');
+                return rejectWithValue('Empty response data from API');
+            }
+
+            // Handle both response formats - some endpoints might return { adventurer: {...} }
+            // while others might return the adventurer object directly
+            const adventurerData = response.data.adventurer || response.data;
+
+            if (!adventurerData) {
+                console.error(
+                    '[AdventurerSlice] Invalid response structure:',
+                    response.data
+                );
+                return rejectWithValue('Invalid response structure from API');
+            }
+
+            return adventurerData;
         } catch (error: unknown) {
+            console.error('[AdventurerSlice] Error fetching adventurer:', error);
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to fetch adventurer';
             return rejectWithValue(errorMessage);
