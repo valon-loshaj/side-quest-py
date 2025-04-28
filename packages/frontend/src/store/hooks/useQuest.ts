@@ -46,8 +46,16 @@ export const useQuest = () => {
     );
 
     const completeQuest = useCallback(
-        (id: string) => {
-            return dispatch(markQuestAsCompleted(id));
+        (id: string, adventurerId: string, completed: boolean = true) => {
+            return dispatch(
+                markQuestAsCompleted({
+                    id,
+                    questData: {
+                        completed,
+                        adventurer_id: adventurerId,
+                    },
+                })
+            );
         },
         [dispatch]
     );

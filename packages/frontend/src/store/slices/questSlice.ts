@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import apiClient from '../../api/client';
 import { Quest } from '../../types/models';
 import { API_BASE_URL } from '../../config';
+import { logApiResponse } from '../../utils/debug';
 
 interface QuestState {
     quests: Quest[];
@@ -17,9 +18,9 @@ interface CreateQuestRequest {
     [key: string]: unknown;
 }
 
-interface QuestResponse {
-    message: string;
-    quest: Quest;
+interface UpdateQuestRequest {
+    id: string;
+    questData: Partial<Quest>;
 }
 
 interface EditingQuestState {
@@ -89,16 +90,28 @@ export const createQuest = createAsyncThunk(
     'quest/create',
     async (questData: CreateQuestRequest, { rejectWithValue }) => {
         try {
-            const response = await apiClient.post<QuestResponse>(
-                `${API_BASE_URL}/quest`,
-                {
-                    title: questData.title,
-                    experience_reward: questData.experienceReward,
-                    adventurer_id: questData.adventurerId,
-                }
-            );
-            return response.data.quest;
+            console.log('Sending quest creation request:', {
+                title: questData.title,
+                experience_reward: questData.experienceReward,
+                adventurer_id: questData.adventurerId,
+            });
+
+            const response = await apiClient.post<Quest>(`${API_BASE_URL}/quest`, {
+                title: questData.title,
+                experience_reward: questData.experienceReward,
+                adventurer_id: questData.adventurerId,
+            });
+
+            logApiResponse('Quest Creation', response);
+
+            if (!response.data) {
+                return rejectWithValue('No data received from server');
+            }
+
+            console.log('Successfully created quest:', response.data);
+            return response.data;
         } catch (error: unknown) {
+            console.error('API Error creating quest:', error);
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to create quest';
             return rejectWithValue(errorMessage);
@@ -110,10 +123,8 @@ export const getQuest = createAsyncThunk(
     'quest/getOne',
     async (id: string, { rejectWithValue }) => {
         try {
-            const response = await apiClient.get<{ quest: Quest }>(
-                `${API_BASE_URL}/quest/${id}`
-            );
-            return response.data.quest;
+            const response = await apiClient.get<Quest>(`${API_BASE_URL}/quest/${id}`);
+            return response.data;
         } catch (error: unknown) {
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to fetch quest';
@@ -124,16 +135,28 @@ export const getQuest = createAsyncThunk(
 
 export const markQuestAsCompleted = createAsyncThunk(
     'quest/complete',
-    async (id: string, { rejectWithValue }) => {
+    async (questData: UpdateQuestRequest, { rejectWithValue }) => {
         try {
-            const response = await apiClient.patch<QuestResponse>(
-                `${API_BASE_URL}/quest/${id}`,
+            const response = await apiClient.put<Quest>(
+                `${API_BASE_URL}/quest/${questData.id}`,
                 {
-                    completed: true,
+                    completed:
+                        questData.questData?.completed !== undefined
+                            ? questData.questData.completed
+                            : true,
+                    adventurer_id: questData.questData?.adventurer_id,
                 }
             );
-            return response.data.quest;
+
+            if (!response.data) {
+                console.error('Invalid response format:', response);
+                return rejectWithValue('Invalid response data structure');
+            }
+
+            console.log('Quest updated successfully:', response.data);
+            return response.data;
         } catch (error: unknown) {
+            console.error('Error in markQuestAsCompleted:', error);
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to complete quest';
             return rejectWithValue(errorMessage);
@@ -143,22 +166,27 @@ export const markQuestAsCompleted = createAsyncThunk(
 
 export const updateQuest = createAsyncThunk(
     'quest/update',
-    async (
-        { id, questData }: { id: string; questData: Partial<Quest> },
-        { rejectWithValue }
-    ) => {
+    async (questData: UpdateQuestRequest, { rejectWithValue }) => {
         try {
-            const response = await apiClient.put<QuestResponse>(
-                `${API_BASE_URL}/quest/${id}`,
+            const response = await apiClient.put<Quest>(
+                `${API_BASE_URL}/quest/${questData.id}`,
                 {
-                    title: questData.title,
-                    experience_reward: questData.experience_reward,
-                    completed: questData.completed,
-                    adventurer_id: questData.adventurer_id,
+                    title: questData.questData.title,
+                    experience_reward: questData.questData.experience_reward,
+                    completed: questData.questData.completed,
+                    adventurer_id: questData.questData.adventurer_id,
                 }
             );
-            return response.data.quest;
+
+            if (!response.data) {
+                console.error('Invalid response format:', response);
+                return rejectWithValue('Invalid response data structure');
+            }
+
+            console.log('Quest details updated successfully:', response.data);
+            return response.data;
         } catch (error: unknown) {
+            console.error('Error in updateQuest:', error);
             const errorMessage =
                 error instanceof Error ? error.message : 'Failed to update quest';
             return rejectWithValue(errorMessage);
@@ -211,8 +239,8 @@ const questSlice = createSlice({
         });
         builder.addCase(createQuest.fulfilled, (state, action) => {
             state.loading = false;
-            state.quests.push(action.payload);
-            state.currentQuest = action.payload;
+            state.quests.push(action.payload as Quest);
+            state.currentQuest = action.payload as Quest;
         });
         builder.addCase(createQuest.rejected, (state, action) => {
             state.loading = false;
