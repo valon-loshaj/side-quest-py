@@ -1,0 +1,126 @@
+.modal {
+    max-width: 400px;
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+    margin: 0;
+    color: var(--color-text);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.modal-close {
+    cursor: pointer;
+    color: var(--color-text-light);
+    transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+    color: var(--color-text);
+}
+
+.modal-form {
+    margin-top: var(--spacing-md);
+    padding: 0 var(--spacing-lg) var(--spacing-lg);
+}
+
+.modal-form-item {
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-form-item-label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.modal-form-item-input {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--color-background-dark);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-md);
+    transition: border-color 0.2s ease;
+}
+
+.modal-form-item-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(106, 90, 205, 0.2);
+}
+
+.modal-form-item-textarea {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--color-background-dark);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-md);
+    transition: border-color 0.2s ease;
+    min-height: 100px;
+    resize: vertical;
+}
+
+.modal-form-item-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(106, 90, 205, 0.2);
+}
+
+.modal-form-item-input-number {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--color-background-dark);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-md);
+    transition: border-color 0.2s ease;
+}
+
+.modal-form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+
+.cancel-button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-background-dark);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.cancel-button:hover {
+    background-color: #484848;
+}
+
+.create-button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: #167600;
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.create-button:hover {
+    background-color: #005d02;
+}

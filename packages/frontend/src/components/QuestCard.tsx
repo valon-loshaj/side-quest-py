@@ -5,6 +5,7 @@ import styles from '../styles/components/QuestCard.module.css';
 interface QuestCardProps {
     quest: Quest;
     isCurrent?: boolean;
+    isUpdating?: boolean;
     onToggleCompletion: (questId: string) => void;
     onEdit: (questId: string, field: 'title' | 'experienceReward') => void;
     onSaveEdit: () => void;
@@ -24,6 +25,7 @@ interface QuestCardProps {
 const QuestCard: React.FC<QuestCardProps> = ({
     quest,
     isCurrent = false,
+    isUpdating = false,
     onToggleCompletion,
     onEdit,
     onSaveEdit,
@@ -41,7 +43,7 @@ const QuestCard: React.FC<QuestCardProps> = ({
 }) => {
     const isEditing = editingQuest.id === quest.id;
 
-    const cardStyleClass = isCurrent ? styles.currentQuestCard : styles.questCard;
+    const cardStyleClass = `${isCurrent ? styles.currentQuestCard : styles.questCard} ${isUpdating ? styles.updating : ''}`;
 
     return (
         <div className={cardStyleClass}>
@@ -49,9 +51,11 @@ const QuestCard: React.FC<QuestCardProps> = ({
                 <div
                     className={`${styles.completionIndicator} ${
                         quest.completed ? styles.completed : ''
-                    }`}
+                    } ${isUpdating ? styles.updating : ''}`}
                     onClick={() => onToggleCompletion(quest.id)}
-                ></div>
+                >
+                    {isUpdating && <span className={styles.loadingSpinner}></span>}
+                </div>
                 <div className={styles.questInfo}>
                     {isEditing && editingQuest.field === 'title' ? (
                         <div className={styles.inputGroup}>
@@ -111,6 +115,7 @@ const QuestCard: React.FC<QuestCardProps> = ({
                             className={styles.markCurrentButton}
                             onClick={() => onSetCurrent(quest.id)}
                             title="Mark as current quest"
+                            disabled={isUpdating}
                         >
                             ★
                         </button>
@@ -118,7 +123,7 @@ const QuestCard: React.FC<QuestCardProps> = ({
                             <button
                                 className={`${styles.moveButton} ${index === 0 ? styles.disabled : ''}`}
                                 onClick={() => onMoveUp(index)}
-                                disabled={index === 0}
+                                disabled={index === 0 || isUpdating}
                                 title="Move up"
                             >
                                 ▲
@@ -128,7 +133,7 @@ const QuestCard: React.FC<QuestCardProps> = ({
                             <button
                                 className={`${styles.moveButton} ${isLast ? styles.disabled : ''}`}
                                 onClick={() => onMoveDown(index)}
-                                disabled={isLast}
+                                disabled={isLast || isUpdating}
                                 title="Move down"
                             >
                                 ▼
@@ -138,6 +143,7 @@ const QuestCard: React.FC<QuestCardProps> = ({
                             className={styles.deleteButton}
                             onClick={() => onDelete(quest.id)}
                             title="Delete quest"
+                            disabled={isUpdating}
                         >
                             🗑️
                         </button>

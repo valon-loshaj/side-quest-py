@@ -27,8 +27,8 @@ interface Quest {
     title: string;
     experience_reward: number;
     completed: boolean;
-    createdAt: string;
-    updatedAt: string;
+    created_at: string;
+    updated_at: string;
     adventurer_id: string;
 }
 

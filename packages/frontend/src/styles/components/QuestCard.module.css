@@ -203,3 +203,28 @@
         margin-bottom: 0.5rem;
     }
 }
+
+.updating {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loadingSpinner {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}

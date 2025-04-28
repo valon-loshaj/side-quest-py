@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { Quest } from '../types/models';
 import { EditingQuestState } from '../store/slices/questSlice';
 import QuestCard from '../components/QuestCard';
+import QuestCreateModal from '../components/QuestCreateModal';
 
 const Dashboard: React.FC = () => {
     const { user, loading: authLoading } = useAppSelector(state => state.auth);
@@ -22,6 +23,7 @@ const Dashboard: React.FC = () => {
         updateQuestDetails,
         removeQuest,
         selectQuest,
+        completeQuest,
     } = useQuest();
     const dispatch = useAppDispatch();
     const [currentQuestId, setCurrentQuestId] = useState<string | null>(null);
@@ -34,6 +36,8 @@ const Dashboard: React.FC = () => {
     const [questsLoading, setQuestsLoading] = useState(false);
     const adventurersFetchedRef = useRef(false);
     const userFetchedRef = useRef(false);
+    const [isQuestCreateModalOpen, setIsQuestCreateModalOpen] = useState(false);
+    const [updatingQuestIds, setUpdatingQuestIds] = useState<string[]>([]);
 
     // Fetch user data if not already loaded
     useEffect(() => {
@@ -140,10 +144,28 @@ const Dashboard: React.FC = () => {
     const toggleQuestCompletion = (questId: string) => {
         const quest = quests.find(q => q.id === questId);
         if (quest && currentAdventurer?.id) {
-            updateQuestDetails(questId, {
-                completed: !quest.completed,
-                adventurer_id: currentAdventurer.id,
-            });
+            // Mark this quest as updating
+            setUpdatingQuestIds(prev => [...prev, questId]);
+
+            // Perform the update
+            completeQuest(questId, currentAdventurer.id, !quest.completed)
+                .then(result => {
+                    console.log('Quest update result:', result);
+                    if (result.meta.requestStatus === 'fulfilled') {
+                        // Update is successful, no need to do anything else as Redux has updated
+                        console.log('Quest completion status updated successfully');
+                    } else {
+                        // If it fails, show an error
+                        console.error('Failed to update quest status:', result.payload);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error updating quest:', err);
+                })
+                .finally(() => {
+                    // Always remove the updating indicator when done
+                    setUpdatingQuestIds(prev => prev.filter(id => id !== questId));
+                });
         }
     };
 
@@ -203,19 +225,50 @@ const Dashboard: React.FC = () => {
         const quest = quests.find(q => q.id === editingQuest.id);
         if (!quest) return;
 
+        // Mark this quest as updating
+        setUpdatingQuestIds(prev => [...prev, editingQuest.id!]);
+
+        let updatePromise;
         if (editingQuest.field === 'title') {
-            updateQuestDetails(editingQuest.id, {
+            updatePromise = updateQuestDetails(editingQuest.id, {
                 title: editValue,
                 adventurer_id: currentAdventurer.id,
             });
         } else if (editingQuest.field === 'experienceReward') {
             const xpValue = parseInt(editValue, 10);
             if (!isNaN(xpValue)) {
-                updateQuestDetails(editingQuest.id, {
+                updatePromise = updateQuestDetails(editingQuest.id, {
                     experience_reward: xpValue,
                     adventurer_id: currentAdventurer.id,
                 });
             }
+        }
+
+        if (updatePromise) {
+            updatePromise
+                .then(result => {
+                    console.log('Quest update result:', result);
+                    if (result.meta.requestStatus === 'fulfilled') {
+                        console.log('Quest details updated successfully');
+                    } else {
+                        console.error(
+                            'Failed to update quest details:',
+                            result.payload
+                        );
+                    }
+                })
+                .catch(err => {
+                    console.error('Error updating quest details:', err);
+                })
+                .finally(() => {
+                    // Always remove the updating indicator when done
+                    setUpdatingQuestIds(prev =>
+                        prev.filter(id => id !== editingQuest.id!)
+                    );
+                });
+        } else {
+            // If no promise was created, remove from updating
+            setUpdatingQuestIds(prev => prev.filter(id => id !== editingQuest.id!));
         }
 
         setEditingQuest({ id: null, field: null });
@@ -235,21 +288,51 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const createNewQuestHandler = () => {
+    const createNewQuestHandler = (questData: Partial<Quest>) => {
         if (!currentAdventurer?.id) {
             alert('Please select an adventurer first');
             return;
         }
 
-        createNewQuest('New Quest', currentAdventurer.id, 100).then(result => {
-            if (result.meta.requestStatus === 'fulfilled') {
-                const newQuest = result.payload as Quest;
-                startEditing(newQuest.id, 'title');
-                setCurrentQuestId(newQuest.id);
-            } else {
-                alert(`Error creating quest: ${error || 'Unknown error'}`);
-            }
+        // Ensure we have an adventurer ID before creating quest
+        const adventurerId = currentAdventurer.id;
+
+        console.log('Creating quest with data:', {
+            title: questData.title || 'New Quest',
+            adventurerId: adventurerId,
+            experienceReward: questData.experience_reward || 100,
         });
+
+        createNewQuest(
+            questData.title || 'New Quest',
+            adventurerId,
+            questData.experience_reward || 100
+        )
+            .then(result => {
+                console.log('Quest creation result:', result);
+
+                if (result.meta.requestStatus === 'fulfilled' && result.payload) {
+                    // Make sure payload exists and has an id property
+                    const newQuest = result.payload as Quest;
+                    console.log('New quest created:', newQuest);
+
+                    if (newQuest && newQuest.id) {
+                        setCurrentQuestId(newQuest.id);
+                    } else {
+                        console.error('Created quest has no ID:', newQuest);
+                    }
+                    setIsQuestCreateModalOpen(false);
+                } else {
+                    // When there's an error, the payload contains the error message
+                    const errorMessage = result.payload || 'Unknown error';
+                    console.error('Error creating quest:', result);
+                    alert(`Error creating quest: ${errorMessage}`);
+                }
+            })
+            .catch(err => {
+                console.error('Failed to create quest:', err);
+                alert('Failed to create quest. See console for details.');
+            });
     };
 
     const sortedQuests = [...quests].sort((a, b) => {
@@ -341,6 +424,7 @@ const Dashboard: React.FC = () => {
                             <QuestCard
                                 quest={currentQuest}
                                 isCurrent={true}
+                                isUpdating={updatingQuestIds.includes(currentQuest.id)}
                                 onToggleCompletion={toggleQuestCompletion}
                                 onEdit={startEditing}
                                 onSaveEdit={saveEditedValue}
@@ -363,9 +447,17 @@ const Dashboard: React.FC = () => {
 
                 <div className={styles.allQuestsSection}>
                     <h2>All Quests</h2>
+                    <QuestCreateModal
+                        isOpen={isQuestCreateModalOpen}
+                        onClose={() => setIsQuestCreateModalOpen(false)}
+                        onSubmit={createNewQuestHandler}
+                        adventurerId={currentAdventurer?.id || ''}
+                    />
                     <button
                         className={`${styles.logoutButton} ${styles.createQuestButton}`}
-                        onClick={createNewQuestHandler}
+                        onClick={() =>
+                            setIsQuestCreateModalOpen(!isQuestCreateModalOpen)
+                        }
                         disabled={!currentAdventurer?.id}
                     >
                         Create New Quest
@@ -386,6 +478,7 @@ const Dashboard: React.FC = () => {
                                 <QuestCard
                                     key={quest.id}
                                     quest={quest}
+                                    isUpdating={updatingQuestIds.includes(quest.id)}
                                     onToggleCompletion={toggleQuestCompletion}
                                     onEdit={startEditing}
                                     onSaveEdit={saveEditedValue}
