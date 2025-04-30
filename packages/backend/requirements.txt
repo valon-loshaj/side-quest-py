@@ -25,4 +25,3 @@ pydantic[email]
 alembic>=1.13.0
 types-pymysql==1.1.0.20241103
 celery==5.3.5
-types-celery==5.3.5

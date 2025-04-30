@@ -5,33 +5,31 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV FLASK_ENV=development
-ENV FLASK_APP=src.wsgi:app
+ENV FASTAPI_ENV=development
 ENV SECRET_KEY=dev_secret_key
-ENV DATABASE_URL=sqlite:///instance/side_quest_dev.db
+ENV DATABASE_URL=mysql+pymysql://side_quest:side_quest_password@mariadb:3306/side_quest_dev
+ENV PYTHONPATH=/app
 
-# Install dependencies including curl for healthcheck
-RUN apt-get update && apt-get install -y curl && \
+# Install dependencies including curl for healthcheck and MariaDB client for DB connection
+RUN apt-get update && apt-get install -y curl default-libmysqlclient-dev build-essential default-mysql-client && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-COPY packages/backend/requirements.txt packages/backend/requirements-dev.txt /app/
+# Copy requirements files
+COPY packages/backend/requirements.txt packages/backend/requirements-dev.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 # Copy backend project
-COPY packages/backend/ /app/backend/
-WORKDIR /app/backend
+COPY packages/backend/ /app/
 
-# Install the project
+# Install the project in development mode
 RUN pip install -e .
 
-# Copy entrypoint script
-COPY entrypoint.sh /app/
-RUN chmod +x /app/entrypoint.sh
+# Create entrypoint script directly
+RUN echo '#!/bin/bash\nset -e\n\necho "Waiting for 5 seconds before starting database operations..."\nsleep 5\n\necho "Setting up the database..."\necho "Environment: $FASTAPI_ENV"\necho "Database URL: $DATABASE_URL"\n\n# Create instance directory if it does not exist\nmkdir -p /app/instance\n\n# Wait for MariaDB to be ready\necho "Waiting for MariaDB to be ready..."\n\nfor i in {1..60}; do\n    if mysqladmin ping -h mariadb -u side_quest -pside_quest_password --silent; then\n        echo "MariaDB is ready!"\n        break\n    fi\n    echo "Waiting for MariaDB... ($i/60)"\n    sleep 2\ndone\n\n# Wait for RabbitMQ to be ready\necho "Waiting for RabbitMQ to be ready..."\nfor i in {1..30}; do\n    if curl -s -u guest:guest http://rabbitmq:15672/api/overview > /dev/null; then\n        echo "RabbitMQ is ready!"\n        break\n    fi\n    echo "Waiting for RabbitMQ... ($i/30)"\n    sleep 2\ndone\n\n# Initialize the database if needed\nif [ -f /app/alembic.ini ]; then\n    echo "Running database migrations with Alembic..."\n    cd /app && python scripts/db/migrate_db.py\nelse\n    echo "No alembic.ini found, initializing database directly..."\n    cd /app && python scripts/db/init_db.py\nfi\n\n# Check if we need to seed the database\nif [ "$SEED_DB" = "true" ]; then\n    echo "Seeding the database..."\n    cd /app && python scripts/db/seed_db.py\nfi\n\necho "Database setup complete!"\n\n# Start the application\nif [ "$FASTAPI_ENV" = "development" ]; then\n    echo "Starting uvicorn development server..."\n    cd /app && exec uvicorn src.main:app --host 0.0.0.0 --port 5000 --reload\nelse\n    echo "Starting gunicorn production server..."\n    cd /app && exec gunicorn -c gunicorn.conf.py src.main:app\nfi' > /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
 # Expose port
 EXPOSE 5000
 
 # Use the entrypoint script
-WORKDIR /app
 ENTRYPOINT ["/app/entrypoint.sh"]

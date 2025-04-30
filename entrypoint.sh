@@ -4,8 +4,6 @@ set -e
 echo "Waiting for 2 seconds before starting database operations..."
 sleep 2
 
-cd /app/backend
-
 echo "Setting up the database..."
 echo "Environment: $FLASK_ENV"
 echo "Database URL: $DATABASE_URL"
@@ -27,6 +25,6 @@ if [ "$FLASK_ENV" = "development" ]; then
     exec flask run --host 0.0.0.0 --reload
 else
     echo "Starting Gunicorn production server..."
-    cd /app/backend/src
+    cd /app/src
     exec gunicorn --bind 0.0.0.0:5000 wsgi:app
 fi 

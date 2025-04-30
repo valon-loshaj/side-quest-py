@@ -5,10 +5,8 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy package.json and lock files
-COPY package.json ./
-
 # Install dependencies
+COPY package.json ./
 RUN pnpm install
 
 # Copy the rest of the application
@@ -17,5 +15,5 @@ COPY . .
 # Expose the port
 EXPOSE 3000
 
-# Start the development server
-CMD ["pnpm", "dev", "--host"] 
+# Start the development server with host flag to allow external connections
+CMD ["pnpm", "dev", "--host", "0.0.0.0"] 
