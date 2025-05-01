@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+    # Node modules initializer container 
+    # This ensures the node_modules volume has proper permissions before frontend starts
+    frontend-init:
+        build:
+            context: ./packages/frontend
+            dockerfile: Dockerfile.dev
+        volumes:
+            - frontend_node_modules:/app/node_modules
+        user: root
+        command: chown -R node:node /app/node_modules
+        networks:
+            - backend_network
+
     backend:
         build:
             context: .
@@ -10,9 +23,9 @@ services:
         environment:
             - FASTAPI_ENV=development
             - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
-            - DATABASE_URL=mysql+pymysql://side_quest:side_quest_password@mariadb:3306/side_quest_dev
-            - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-            - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
+            - DATABASE_URL=mysql+pymysql://side_quest:${DB_PASSWORD:-side_quest_password}@mariadb:3306/side_quest_dev
+            - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672//
+            - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672//
             - GUNICORN_BIND=0.0.0.0:5000
             - GUNICORN_WORKERS=4
             - GUNICORN_WORKER_CLASS=uvicorn.workers.UvicornWorker
@@ -21,11 +34,11 @@ services:
             - GUNICORN_LOG_LEVEL=info
             - GUNICORN_TIMEOUT=120
             - GUNICORN_KEEPALIVE=5
-            - SMTP_SERVER=mailhog
-            - SMTP_PORT=1025
-            - SMTP_USERNAME=user
-            - SMTP_PASSWORD=password
-            - SMTP_SENDER_EMAIL=noreply@sidequest.dev
+            - SMTP_SERVER=${SMTP_SERVER:-mailhog}
+            - SMTP_PORT=${SMTP_PORT:-1025}
+            - SMTP_USERNAME=${SMTP_USERNAME:-user}
+            - SMTP_PASSWORD=${SMTP_PASSWORD:-password}
+            - SMTP_SENDER_EMAIL=${SMTP_SENDER_EMAIL:-noreply@sidequest.dev}
             - SEED_DB=${SEED_DB:-true}
             - PYTHONPATH=/app
         volumes:
@@ -48,6 +61,13 @@ services:
                 condition: service_healthy
             rabbitmq:
                 condition: service_healthy
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
 
     frontend:
         build:
@@ -56,46 +76,63 @@ services:
         ports:
             - '3000:3000'
         volumes:
-            - ./packages/frontend/src:/app/src
-            - ./packages/frontend/public:/app/public
-            - ./packages/frontend/index.html:/app/index.html
-            - ./packages/frontend/vite.config.ts:/app/vite.config.ts
-            # Exclude node_modules from volume mapping
-            - /app/node_modules
+            - ./packages/frontend/src:/app/src:ro
+            - ./packages/frontend/public:/app/public:ro
+            - ./packages/frontend/index.html:/app/index.html:ro
+            - ./packages/frontend/vite.config.ts:/app/vite.config.ts:ro
+            - ./packages/frontend/package.json:/app/package.json:ro
+            - frontend_node_modules:/app/node_modules
         environment:
             - VITE_API_URL=http://localhost:5000
+            - NODE_ENV=development
         depends_on:
+            frontend-init:
+                condition: service_completed_successfully
             backend:
                 condition: service_healthy
         restart: unless-stopped
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
 
     mariadb:
         image: mariadb:10.11
         ports:
             - "3306:3306"
         environment:
-            - MYSQL_ROOT_PASSWORD=rootpassword
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
             - MYSQL_DATABASE=side_quest_dev
             - MYSQL_USER=side_quest
-            - MYSQL_PASSWORD=side_quest_password
+            - MYSQL_PASSWORD=${DB_PASSWORD:-side_quest_password}
         volumes:
             - mariadb_data:/var/lib/mysql
         healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
             interval: 5s
             timeout: 5s
             retries: 10
             start_period: 30s
         restart: unless-stopped
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
 
     rabbitmq:
-        image: rabbitmq:3-management
+        image: rabbitmq:3.12-management
         ports:
             - "5672:5672"
             - "15672:15672"
         environment:
-            - RABBITMQ_DEFAULT_USER=guest
-            - RABBITMQ_DEFAULT_PASS=guest
+            - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+            - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
         healthcheck:
             test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
             interval: 5s
@@ -103,6 +140,13 @@ services:
             retries: 10
             start_period: 30s
         restart: unless-stopped
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
 
     celery:
         build:
@@ -118,9 +162,9 @@ services:
         environment:
             - FASTAPI_ENV=development
             - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
-            - DATABASE_URL=mysql+pymysql://side_quest:side_quest_password@mariadb:3306/side_quest_dev
-            - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-            - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672//
+            - DATABASE_URL=mysql+pymysql://side_quest:${DB_PASSWORD:-side_quest_password}@mariadb:3306/side_quest_dev
+            - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672//
+            - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672//
             - PYTHONPATH=/app
         volumes:
             - ./packages/backend/src:/app/src
@@ -131,6 +175,13 @@ services:
             mariadb:
                 condition: service_healthy
         restart: unless-stopped
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
 
     mailhog:
         image: mailhog/mailhog
@@ -138,6 +189,13 @@ services:
             - "1025:1025"
             - "8025:8025"
         restart: unless-stopped
+        networks:
+            - backend_network
+
+networks:
+    backend_network:
+        driver: bridge
 
 volumes:
     mariadb_data:
+    frontend_node_modules:

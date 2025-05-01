@@ -2,14 +2,19 @@
 This is the main file for the Side Quest FastAPI application.
 """
 
+import os
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Ensure the side_quest_py module can be imported
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Import the centralized settings
-from src.side_quest_py.api.config import settings
-from src.side_quest_py.api.routes.auth_routes import router as auth_router
-from src.side_quest_py.api.routes.adventurer_routes import router as adventurer_router
-from src.side_quest_py.api.routes.quests_routes import router as quests_router
+from side_quest_py.api.config import settings
+from side_quest_py.api.routes.auth_routes import router as auth_router
+from side_quest_py.api.routes.adventurer_routes import router as adventurer_router
+from side_quest_py.api.routes.quests_routes import router as quests_router
 
 # Create FastAPI app instance
 app = FastAPI(

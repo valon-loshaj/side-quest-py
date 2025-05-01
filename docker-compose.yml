@@ -6,39 +6,154 @@ services:
         ports:
             - '5000:5000'
         environment:
-            - FLASK_APP=src.wsgi:app
-            - FLASK_ENV=production
-            - SECRET_KEY=${SECRET_KEY:-production_secret_key}
-            - DATABASE_URL=sqlite:///instance/side_quest.db
+            - FASTAPI_ENV=production
+            - SECRET_KEY=${SECRET_KEY:?Error - SECRET_KEY environment variable is required}
+            - DATABASE_URL=mysql+pymysql://side_quest:${DB_PASSWORD:?Error - DB_PASSWORD environment variable is required}@mariadb:3306/side_quest_prod
+            - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:?Error - RABBITMQ_USER environment variable is required}:${RABBITMQ_PASSWORD:?Error - RABBITMQ_PASSWORD environment variable is required}@rabbitmq:5672//
+            - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
+            - GUNICORN_BIND=0.0.0.0:5000
+            - GUNICORN_WORKERS=4
+            - GUNICORN_WORKER_CLASS=uvicorn.workers.UvicornWorker
+            - GUNICORN_ACCESS_LOG=-
+            - GUNICORN_ERROR_LOG=-
+            - GUNICORN_LOG_LEVEL=info
+            - GUNICORN_TIMEOUT=120
+            - GUNICORN_KEEPALIVE=5
+            - SMTP_SERVER=${SMTP_SERVER:-smtp.example.com}
+            - SMTP_PORT=${SMTP_PORT:-587}
+            - SMTP_USERNAME=${SMTP_USERNAME}
+            - SMTP_PASSWORD=${SMTP_PASSWORD}
+            - SMTP_SENDER_EMAIL=${SMTP_SENDER_EMAIL:-noreply@example.com}
             - SEED_DB=${SEED_DB:-false}
         volumes:
-            - ./packages/backend/instance:/app/backend/instance
-        restart: always
+            - backend_data:/app/instance
+        restart: unless-stopped
         healthcheck:
             test: ['CMD', 'curl', '-f', 'http://localhost:5000/health']
             interval: 30s
             timeout: 10s
             retries: 3
-            start_period: 10s
+            start_period: 30s
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.25'
+                    memory: 512M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-    # Frontend is built and served from the backend in production
-    # through the static files, so no separate service is needed
-# Optional: Add additional services like a database, cache, etc.
-# Example for a PostgreSQL database:
-# db:
-#   image: postgres:14
-#   volumes:
-#     - postgres_data:/var/lib/postgresql/data/
-#   environment:
-#     - POSTGRES_USER=sidequest
-#     - POSTGRES_PASSWORD=sidequest_password
-#     - POSTGRES_DB=sidequest_db
-#   restart: always
-#   healthcheck:
-#     test: ["CMD-SHELL", "pg_isready -U sidequest"]
-#     interval: 10s
-#     timeout: 5s
-#     retries: 5
+    mariadb:
+        image: mariadb:10.11
+        ports:
+            - "3306:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?Error - MYSQL_ROOT_PASSWORD environment variable is required}
+            - MYSQL_DATABASE=side_quest_prod
+            - MYSQL_USER=side_quest
+            - MYSQL_PASSWORD=${DB_PASSWORD:?Error - DB_PASSWORD environment variable is required}
+        volumes:
+            - mariadb_data:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "side_quest", "-p${DB_PASSWORD}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+        restart: unless-stopped
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    memory: 512M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-# volumes:
-#   postgres_data:
+    rabbitmq:
+        image: rabbitmq:3.12-management
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        environment:
+            - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:?Error - RABBITMQ_USER environment variable is required}
+            - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:?Error - RABBITMQ_PASSWORD environment variable is required}
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+        restart: unless-stopped
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    celery:
+        build: .
+        entrypoint: >
+            /bin/bash -c "
+            echo 'Waiting for services to be ready...' &&
+            sleep 15 &&
+            echo 'Starting Celery worker...' &&
+            cd /app/backend && celery -A src.side_quest_py.celery_app worker --loglevel=info
+            "
+        environment:
+            - FASTAPI_ENV=production
+            - SECRET_KEY=${SECRET_KEY:?Error - SECRET_KEY environment variable is required}
+            - DATABASE_URL=mysql+pymysql://side_quest:${DB_PASSWORD:?Error - DB_PASSWORD environment variable is required}@mariadb:3306/side_quest_prod
+            - CELERY_BROKER_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
+            - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
+        restart: unless-stopped
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+            mariadb:
+                condition: service_healthy
+        networks:
+            - backend_network
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+networks:
+    backend_network:
+        driver: bridge
+
+volumes:
+    mariadb_data:
+    backend_data:
