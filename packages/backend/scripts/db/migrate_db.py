@@ -6,92 +6,83 @@ This script initializes and runs migrations for the database.
 
 import os
 import sys
+import subprocess
+from pathlib import Path
+
+# Add parent directory to path to make imports work
+script_dir = Path(__file__).resolve().parent
+root_dir = script_dir.parent.parent
+sys.path.insert(0, str(root_dir))
+
 import click
-from flask import Flask
-from flask.cli import with_appcontext
-from flask_migrate import Migrate
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Import settings
+from src.side_quest_py.api.config import settings
 
-def setup_app():
-    """Set up a Flask app instance for migrations."""
-    # Get the environment from environment variable, default to development
-    env = os.environ.get("FLASK_ENV", "development")
-    print(f"Environment: {env}")
 
-    # Import application components
-    from src.side_quest_py import db
-    from src.side_quest_py.config import config
+def run_alembic_command(command):
+    """Run an alembic command through subprocess.
 
-    # Create a Flask app
-    app = Flask(__name__)
-
-    # Get database URL from environment
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        print("DATABASE_URL environment variable not set!")
-        sys.exit(1)
-
-    print(f"Using DATABASE_URL: {database_url}")
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # Initialize the database with our app
-    db.init_app(app)
-
-    # Import models to ensure they're registered with SQLAlchemy
-    from src.side_quest_py.models import Adventurer, Quest, QuestCompletion, User
-
-    # Initialize Flask-Migrate
-    migrate = Migrate(app, db)
-
-    return app, migrate
+    Args:
+        command: The alembic command to run
+    """
+    try:
+        subprocess.run(["alembic"] + command.split(), check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Error running alembic command: {e}")
+        return False
 
 
 def init_migrations():
-    """Initialize database migrations."""
-    app, migrate = setup_app()
+    """Initialize database migrations using Alembic."""
+    # Get the environment from environment variable
+    env = os.environ.get("FASTAPI_ENV", "development")
+    print(f"Environment: {env}")
 
-    with app.app_context():
-        try:
-            # Check if migrations directory exists
-            migrations_dir = os.path.join(os.getcwd(), "migrations")
-            if not os.path.exists(migrations_dir):
-                print("Initializing migrations directory...")
-                os.system(f"flask db init")
-                print("✅ Migrations directory initialized")
-            else:
-                print("Migrations directory already exists")
+    # Get database URL from environment
+    database_url = settings.DATABASE_URL
+    print(f"Using DATABASE_URL: {database_url}")
 
-            # Create a migration
-            print("Creating migration...")
-            os.system(f"flask db migrate -m 'Initial migration'")
-            print("✅ Migration created")
+    # Import models to ensure they're registered with SQLAlchemy
+    from src.side_quest_py.models.db_models import Adventurer, Quest, QuestCompletion, User
 
-            # Apply the migration
-            print("Applying migration...")
-            os.system(f"flask db upgrade")
-            print("✅ Migration applied")
+    try:
+        # Check if alembic.ini exists
+        if not os.path.exists("alembic.ini"):
+            print("Initializing alembic...")
+            if not run_alembic_command("init migrations"):
+                print("❌ Failed to initialize alembic")
+                sys.exit(1)
+            print("✅ Alembic initialized")
+        else:
+            print("Alembic already initialized")
 
-        except SQLAlchemyError as e:
-            print(f"❌ Database error: {e}")
+        # Create a migration
+        print("Creating migration...")
+        if not run_alembic_command("revision --autogenerate -m 'Migration'"):
+            print("❌ Failed to create migration")
             sys.exit(1)
-        except Exception as e:
-            print(f"❌ Error: {e}")
+        print("✅ Migration created")
+
+        # Apply the migration
+        print("Applying migration...")
+        if not run_alembic_command("upgrade head"):
+            print("❌ Failed to apply migration")
             sys.exit(1)
+        print("✅ Migration applied")
 
-
-@click.command("migrate-db")
-@with_appcontext
-def migrate_db_command():
-    """Flask CLI command to migrate the database."""
-    click.echo("Running database migrations...")
-    init_migrations()
-    click.echo("Database migrations complete!")
+    except SQLAlchemyError as e:
+        print(f"❌ Database error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

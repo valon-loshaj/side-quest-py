@@ -4,43 +4,33 @@ import importlib.util
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any, List, Optional
 
-from flask import Flask, current_app
-from sqlalchemy import text
+# Add parent directory to path to make imports work
+script_dir = Path(__file__).resolve().parent
+root_dir = script_dir.parent.parent
+sys.path.insert(0, str(root_dir))
+
+from sqlalchemy import text, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
-# Import the SQLAlchemy instance directly
-from src.side_quest_py import db
+# Import the database setup
+from src.side_quest_py.database import Base, engine, SessionLocal
+from src.side_quest_py.api.config import settings
 
 
-def init_db(app: Optional[Flask] = None) -> None:
-    """Initialize the database by creating all tables.
-
-    Args:
-        app: Flask application instance (optional)
-    """
-    # Get the app if not provided
-    if app is None:
-        app = current_app
-
-    db.create_all()
-    logging.info("Database initialized: %s", app.config["SQLALCHEMY_DATABASE_URI"])
+def init_db() -> None:
+    """Initialize the database by creating all tables."""
+    Base.metadata.create_all(engine)
+    logging.info("Database initialized: %s", settings.DATABASE_URL)
 
 
-def reset_db(app: Optional[Flask] = None) -> None:
-    """Reset the database by dropping and recreating all tables.
-
-    Args:
-        app: Flask application instance (optional)
-    """
-    # Get the app if not provided
-    if app is None:
-        app = current_app
-
-    db.drop_all()
-    db.create_all()
-    logging.info("Database reset: %s", app.config["SQLALCHEMY_DATABASE_URI"])
+def reset_db() -> None:
+    """Reset the database by dropping and recreating all tables."""
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    logging.info("Database reset: %s", settings.DATABASE_URL)
 
 
 def _load_seed_data_module() -> Any:
@@ -59,34 +49,29 @@ def _load_seed_data_module() -> Any:
     return seed_data_module
 
 
-def _seed_entity(entity_name: str, entities: List[Any]) -> None:
+def _seed_entity(session, entity_name: str, entities: List[Any]) -> None:
     """Add entities to the database and commit the transaction.
 
     Args:
+        session: SQLAlchemy session
         entity_name: Name of the entity type for logging
         entities: List of entity instances to add
     """
     for entity in entities:
-        db.session.add(entity)
-    db.session.commit()
+        session.add(entity)
+    session.commit()
     logging.info("Added %d %s", len(entities), entity_name)
 
 
-def seed_db(app: Optional[Flask] = None) -> None:
-    """Seed the database with initial data.
-
-    Args:
-        app: Flask application instance (optional)
-    """
-    # Get the app if not provided
-    if app is None:
-        app = current_app
-
+def seed_db() -> None:
+    """Seed the database with initial data."""
+    db = SessionLocal()
+    
     try:
         from src.side_quest_py.models.db_models import User
 
         # Check if we already have users
-        if User.query.count() > 0:
+        if db.query(User).count() > 0:
             logging.info("Database already contains data - skipping seed")
             return
 
@@ -99,48 +84,46 @@ def seed_db(app: Optional[Flask] = None) -> None:
         seed_data = seed_data_module.get_seed_data()
 
         # Add entities in order (users, adventurers, quests, completions)
-        _seed_entity("users", seed_data["users"])
-        _seed_entity("adventurers", seed_data["adventurers"])
-        _seed_entity("quests", seed_data["quests"])
-        _seed_entity("quest_completions", seed_data["quest_completions"])
+        _seed_entity(db, "users", seed_data["users"])
+        _seed_entity(db, "adventurers", seed_data["adventurers"])
+        _seed_entity(db, "quests", seed_data["quests"])
+        _seed_entity(db, "quest_completions", seed_data["quest_completions"])
 
         logging.info("Database seeded successfully")
 
     except SQLAlchemyError as e:
-        db.session.rollback()
+        db.rollback()
         logging.error("Error seeding database: %s", e)
         raise
     except ImportError as e:
         logging.error("Error importing seed data module: %s", e)
         raise
     except Exception as e:
-        db.session.rollback()
+        db.rollback()
         logging.error("Unexpected error seeding database: %s", e)
         raise
+    finally:
+        db.close()
 
 
-def get_db_status(app: Optional[Flask] = None) -> dict:
+def get_db_status() -> dict:
     """Get the status of the database.
-
-    Args:
-        app: Flask application instance (optional)
 
     Returns:
         dict: Database status information
     """
-    # Get the app if not provided
-    if app is None:
-        app = current_app
-
-    # Get database URI and environment info first in case db connection fails
-    env = app.config.get("ENV") or app.config.get("FLASK_ENV", "development")
-    uri = app.config.get("SQLALCHEMY_DATABASE_URI", "not_configured")
-    track_modifications = app.config.get("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+    db = SessionLocal()
+    
+    # Get environment info
+    env = os.environ.get("FASTAPI_ENV", "development")
+    uri = settings.DATABASE_URL
 
     try:
-        db.session.execute(text("SELECT 1"))
+        db.execute(text("SELECT 1"))
         status = "connected"
     except SQLAlchemyError as e:
         status = f"error: {str(e)}"
+    finally:
+        db.close()
 
-    return {"status": status, "uri": uri, "track_modifications": track_modifications, "env": env}
+    return {"status": status, "uri": uri, "env": env}
